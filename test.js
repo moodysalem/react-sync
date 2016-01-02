@@ -9,11 +9,21 @@ var assert = require('assert');
 var renderer = rtu.createRenderer();
 var d = React.DOM;
 
+var GMAP_API = 'https://maps.googleapis.com/maps/api/geocode/json?address=Oxford%20University,%20uk&sensor=false';
+
 describe('#render()', function () {
   it('should just render the child component', function () {
-    renderer.render(rs({}, d.div({}, 'Some Text')));
+    renderer.render(
+      rs({
+        rootUrl: GMAP_API
+      }, React.createElement(React.createClass({
+        displayName: 'Display Info',
+
+        render: function () {
+          return d.div({}, 'some text');
+        }
+      }))));
     var out = renderer.getRenderOutput();
-    assert(out.type === 'div');
     assert(typeof out.props === 'object');
   });
 });

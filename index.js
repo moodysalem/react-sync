@@ -44,8 +44,12 @@ module.exports = React.createClass({
 
     // Event Handlers - these are not passed to the child, but rather are used to notify the owner component
     // when they occur
+    onSync: rpt.func,
     onSave: rpt.func,
-    onDelete: rpt.func
+    onDelete: rpt.func,
+
+    // Options to pass to ajax calls
+    ajaxOptions: rpt.object
   },
 
   getDefaultProps: function () {
@@ -60,19 +64,28 @@ module.exports = React.createClass({
       start: null,
       startParam: 'start',
       count: null,
-      countParam: 'count'
+      countParam: 'count',
+      onSync: null,
+      onSave: null,
+      onDelete: null,
+      ajaxOptions: null
     };
   },
 
   getInitialState: function () {
     return {
+      // The data received from the AJAX call
       data: null,
+      // Whether the data has been fetched
       fetched: false,
-      loading: false,
-      numRecords: null
+      // Whether an ajax call is in progress
+      loading: false
     };
   },
 
+  /**
+   * Get an object containing all the parameters that should be sent as query parameters in the URL
+   */
   getParameterObject: function () {
     var p = $.extend({}, this.props.params);
     if (this.props.start !== null && this.props.count !== null) {
@@ -88,12 +101,36 @@ module.exports = React.createClass({
     return p;
   },
 
+  /**
+   * Get the URL that should be fetched
+   */
+  getUrl: function () {
+    var url = this.props.rootUrl;
+    if (this.props.id !== null) {
+      if (url[ url.length - 1 ] === '/') {
+        url = url + this.props.id;
+      } else {
+        url = url + '/' + this.props.id;
+      }
+    }
+
+    url = url + '?' + $.param(this.getParameterObject(), this.props.traditionalParams);
+  },
+
 
   fetch: function () {
     this.setState({
       loading: true
     }, function () {
-
+      $.ajax({
+        url: this.getUrl(),
+        success: (function (data) {
+          this.markFetched();
+          if (this.props.onSync !== null){
+            this.props.onSync();
+          }
+        }).bind(this)
+      })
     });
   },
 
