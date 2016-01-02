@@ -6,7 +6,7 @@
 	else if(typeof exports === 'object')
 		exports["ReactSync"] = factory(require("react"), require("jquery"));
 	else
-		root["ReactSync"] = factory(root["react"], root["jquery"]);
+		root["ReactSync"] = factory(root["React"], root["$"]);
 })(this, function(__WEBPACK_EXTERNAL_MODULE_1__, __WEBPACK_EXTERNAL_MODULE_2__) {
 return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache

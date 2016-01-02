@@ -11,10 +11,10 @@ module.exports = {
     libraryTarget: "umd"
   },
 
-  externals: [
-    // all non-relative requires
-    /^[a-z\-0-9]+$/
-  ],
+  externals: {
+    'jquery': { commonjs: 'jquery', commonjs2: 'jquery', amd: 'jquery', root: '$' },
+    'react': { commonjs: 'react', commonjs2: 'react', amd: 'react', root: 'React' }
+  },
 
   plugins: min ? [
     new webpack.optimize.UglifyJsPlugin()
