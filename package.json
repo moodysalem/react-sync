@@ -4,7 +4,11 @@
   "description": "A react component that handles data fetching and saving, following Backbone Model and Collection patterns",
   "main": "index.js",
   "scripts": {
-    "test": "mocha test.js"
+    "test": "mocha test.js",
+    "prebuild": "npm test",
+    "build:dev": "webpack",
+    "build:prd": "ENVIRONMENT=PRODUCTION webpack",
+    "build": "npm run build:dev && npm run build:prd"
   },
   "repository": {
     "type": "git",
@@ -31,6 +35,7 @@
   "devDependencies": {
     "mocha": "^2.3.4",
     "react-addons-test-utils": "^0.14.5",
-    "react-dom": "^0.14.5"
+    "react-dom": "^0.14.5",
+    "webpack": "^1.12.9"
   }
 }

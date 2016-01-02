@@ -1,0 +1,364 @@
+(function webpackUniversalModuleDefinition(root, factory) {
+	if(typeof exports === 'object' && typeof module === 'object')
+		module.exports = factory(require("react"), require("jquery"));
+	else if(typeof define === 'function' && define.amd)
+		define(["react", "jquery"], factory);
+	else if(typeof exports === 'object')
+		exports["ReactSync"] = factory(require("react"), require("jquery"));
+	else
+		root["ReactSync"] = factory(root["react"], root["jquery"]);
+})(this, function(__WEBPACK_EXTERNAL_MODULE_1__, __WEBPACK_EXTERNAL_MODULE_2__) {
+return /******/ (function(modules) { // webpackBootstrap
+/******/ 	// The module cache
+/******/ 	var installedModules = {};
+
+/******/ 	// The require function
+/******/ 	function __webpack_require__(moduleId) {
+
+/******/ 		// Check if module is in cache
+/******/ 		if(installedModules[moduleId])
+/******/ 			return installedModules[moduleId].exports;
+
+/******/ 		// Create a new module (and put it into the cache)
+/******/ 		var module = installedModules[moduleId] = {
+/******/ 			exports: {},
+/******/ 			id: moduleId,
+/******/ 			loaded: false
+/******/ 		};
+
+/******/ 		// Execute the module function
+/******/ 		modules[moduleId].call(module.exports, module, module.exports, __webpack_require__);
+
+/******/ 		// Flag the module as loaded
+/******/ 		module.loaded = true;
+
+/******/ 		// Return the exports of the module
+/******/ 		return module.exports;
+/******/ 	}
+
+
+/******/ 	// expose the modules object (__webpack_modules__)
+/******/ 	__webpack_require__.m = modules;
+
+/******/ 	// expose the module cache
+/******/ 	__webpack_require__.c = installedModules;
+
+/******/ 	// __webpack_public_path__
+/******/ 	__webpack_require__.p = "";
+
+/******/ 	// Load entry module and return exports
+/******/ 	return __webpack_require__(0);
+/******/ })
+/************************************************************************/
+/******/ ([
+/* 0 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var React = __webpack_require__(1);
+	var $ = __webpack_require__(2);
+	var rpt = React.PropTypes;
+
+	module.exports = React.createClass({
+	  displayName: 'React Sync',
+
+	  propTypes: {
+	    // The root URL where the data is located
+	    rootUrl: rpt.string.isRequired,
+	    // The ID of the model. Leave blank to fetch a collection
+	    id: rpt.oneOfType([ rpt.string, rpt.number ]),
+	    // Whether the data should be fetched when this component mounts
+	    fetchOnMount: rpt.bool,
+	    // Whether the data should be fetched when any new properties are received that could change the data
+	    fetchOnNewProps: rpt.bool,
+
+	    // The query parameters to include when fetching the data
+	    params: rpt.object,
+	    // Indicates whether to perform a traditional "shallow" serialization of query parameters
+	    traditionalParams: rpt.bool,
+
+	    // How many records to fetch at a time - leave blank to ignore this parameter
+	    count: rpt.number,
+	    // The name of the parameter that will be passed to the server to indicate how many records to fetch
+	    countParam: rpt.string,
+
+	    // The number of the record on which to start - leave blank to ignore this parameter
+	    start: rpt.number,
+	    // The name of the parameter that will be passed to the server to indicate which record to start on
+	    startParam: rpt.string,
+
+	    // The sorts to send to the server - leave blank to ignore this parameter
+	    sorts: rpt.arrayOf(rpt.shape({
+	      attribute: rpt.string.isRequired,
+	      desc: rpt.bool.isRequired
+	    })),
+	    // The separator between the attribute and whether it's descending or ascending
+	    sortInfoSeparator: rpt.string,
+	    // The name of the query parameter that will be used for sorting
+	    sortParam: rpt.string,
+
+	    // Event Handlers - these are not passed to the child, but rather are used to notify the owner component
+	    // when they occur
+	    onCreate: rpt.func,
+	    onRead: rpt.func,
+	    onUpdate: rpt.func,
+	    onDelete: rpt.func,
+
+	    onError: rpt.func,
+
+	    // Options to pass to ajax calls
+	    ajaxOptions: rpt.object
+	  },
+
+	  getDefaultProps: function () {
+	    return {
+	      fetchOnMount: true,
+	      fetchOnNewProps: true,
+	      params: null,
+	      traditionalParams: true,
+	      sorts: null,
+	      sortInfoSeparator: '|',
+	      sortParam: 'sort',
+	      start: null,
+	      startParam: 'start',
+	      count: null,
+	      countParam: 'count',
+	      onCreate: null,
+	      onRead: null,
+	      onUpdate: null,
+	      onDelete: null,
+	      onError: null,
+	      ajaxOptions: null
+	    };
+	  },
+
+	  getInitialState: function () {
+	    return {
+	      // The data received from the AJAX call
+	      data: null,
+	      // Whether the data has been fetched
+	      fetched: false,
+	      // Whether an ajax call is in progress
+	      loading: false
+	    };
+	  },
+
+	  /**
+	   * Get an object containing all the parameters that should be sent as query parameters in the URL
+	   */
+	  getParameterObject: function () {
+	    var p = $.extend({}, this.props.params);
+	    if (this.props.start !== null && this.props.count !== null) {
+	      p[ this.props.startParam ] = this.props.start;
+	      p[ this.props.countParam ] = this.props.count;
+	    }
+	    if (this.props.sorts !== null && this.props.sorts.length > 0) {
+	      var sis = this.props.sortInfoSeparator;
+	      p[ this.props.sortParam ] = $.map(this.props.sorts, function (sort) {
+	        return ((sort.desc) ? 'D' : 'A') + sis + sort.attribute;
+	      });
+	    }
+	    return p;
+	  },
+
+	  /**
+	   * Get the URL that should be fetched
+	   */
+	  getUrl: function (withQueryParams) {
+	    var url = this.props.rootUrl;
+	    if (this.props.id !== null) {
+	      if (url[ url.length - 1 ] === '/') {
+	        url = url + this.props.id;
+	      } else {
+	        url = url + '/' + this.props.id;
+	      }
+	    }
+
+	    if (withQueryParams) {
+	      url = url + '?' + $.param(this.getParameterObject(), this.props.traditionalParams);
+	    }
+	    return url;
+	  },
+
+	  /**
+	   * Modify the loading state of the object
+	   * @param isLoading boolean of whether it's loading
+	   */
+	  setLoading: function (isLoading, callback) {
+	    if (this.isMounted()) {
+	      this.setState({
+	        loading: isLoading
+	      }, callback);
+	    }
+	  },
+
+	  /**
+	   * Fetch the data at the URL
+	   */
+	  fetch: function () {
+	    this.setLoading(true, function () {
+	      $.ajax($.extend({}, this.props.ajaxOptions, {
+	        url: this.getUrl(true),
+	        context: this,
+	        success: function (data, status, jqXhr) {
+	          this.setLoading(false);
+	          this.markFetched();
+	          this.setData(data);
+	          if (this.props.onRead !== null) {
+	            this.props.onRead.apply(this, arguments);
+	          }
+	        },
+	        error: function (jqXhr, textStatus, errorThrown) {
+	          this.setLoading(false);
+	          this.clearData();
+	          if (this.props.onError !== null) {
+	            this.props.onError.apply(this, arguments);
+	          }
+	        }
+	      }))
+	    });
+	  },
+
+	  /**
+	   * Reset the data in the state object to null
+	   */
+	  clearData: function () {
+	    this.setData(null);
+	  },
+
+	  /**
+	   * Set the data in the state object
+	   * @param data to set
+	   */
+	  setData: function (data) {
+	    if (this.isMounted()) {
+	      this.setState({
+	        data: data
+	      });
+	    }
+	  },
+
+	  /**
+	   * Set fetched to true
+	   */
+	  markFetched: function () {
+	    if (this.isMounted()) {
+	      if (!this.state.fetched) {
+	        this.setState({
+	          fetched: true
+	        });
+	      }
+	    }
+	  },
+
+	  /**
+	   * Fetch if the component is supposed to fetch on mount
+	   */
+	  componentDidMount: function () {
+	    if (this.props.fetchOnMount) {
+	      this.fetch();
+	    }
+	  },
+
+	  /**
+	   * Fetch if the component is supposed to fetch with props updates
+	   * @param nextProps new props
+	   */
+	  componentWillReceiveProps: function (nextProps) {
+	    if (this.props.fetchOnNewProps) {
+	      this.fetch();
+	    }
+	  },
+
+	  /**
+	   * Sync new data to the server
+	   * @param newData new data to save
+	   */
+	  doSave: function (newData) {
+	    var isNew = this.props.id === null;
+	    this.setLoading(true, function () {
+	      $.ajax($.extend({}, this.props.ajaxOptions, {
+	        method: isNew ? 'POST' : 'PUT',
+	        data: newData,
+	        url: this.getUrl(),
+	        context: this,
+
+	        success: function (data, status, jqXhr) {
+	          this.setLoading(false);
+	          this.clearData();
+	          var eHandler = (isNew ? this.props.onCreate : this.props.onUpdate);
+	          if (eHandler !== null) {
+	            eHandler.apply(this, arguments);
+	          }
+	        },
+
+	        error: function (jqXhr, textStatus, errorThrown) {
+	          this.setLoading(false);
+	          if (this.props.onError !== null) {
+	            this.props.onError.apply(this, arguments);
+	          }
+	        }
+	      }));
+	    });
+	  },
+
+	  /**
+	   * Make a delete request to the URL
+	   */
+	  doDelete: function () {
+	    this.setLoading(true, function () {
+	      $.ajax($.extend({}, this.props.ajaxOptions, {
+	        method: 'DELETE',
+	        url: this.getUrl(),
+	        context: this,
+
+	        success: function (data, status, jqXhr) {
+	          this.setLoading(false);
+	          this.clearData();
+	          if (this.props.onDelete !== null) {
+	            this.props.onDelete.apply(this, arguments);
+	          }
+	        },
+
+	        error: function (jqXhr, textStatus, errorThrown) {
+	          this.setLoading(false);
+	          if (this.props.onError !== null) {
+	            this.props.onError.apply(this, arguments);
+	          }
+	        }
+	      }));
+	    });
+	  },
+
+	  /**
+	   * Just clone the child element with the data, plus the new event handlers.
+	   * @returns {*}
+	   */
+	  render: function () {
+	    return React.cloneElement(React.Children.only(this.props.children), {
+	      data: this.state.data,
+	      fetched: this.state.fetched,
+	      loading: this.state.loading,
+	      onSave: this.doSave,
+	      onDelete: this.doDelete
+	    });
+	  }
+	});
+
+/***/ },
+/* 1 */
+/***/ function(module, exports) {
+
+	module.exports = __WEBPACK_EXTERNAL_MODULE_1__;
+
+/***/ },
+/* 2 */
+/***/ function(module, exports) {
+
+	module.exports = __WEBPACK_EXTERNAL_MODULE_2__;
+
+/***/ }
+/******/ ])
+});
+;

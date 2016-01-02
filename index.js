@@ -5,7 +5,7 @@ var $ = require('jquery');
 var rpt = React.PropTypes;
 
 module.exports = React.createClass({
-  displayName: 'React Sync Manager',
+  displayName: 'React Sync',
 
   propTypes: {
     // The root URL where the data is located
@@ -44,9 +44,12 @@ module.exports = React.createClass({
 
     // Event Handlers - these are not passed to the child, but rather are used to notify the owner component
     // when they occur
-    onSync: rpt.func,
-    onSave: rpt.func,
+    onCreate: rpt.func,
+    onRead: rpt.func,
+    onUpdate: rpt.func,
     onDelete: rpt.func,
+
+    onError: rpt.func,
 
     // Options to pass to ajax calls
     ajaxOptions: rpt.object
@@ -65,8 +68,9 @@ module.exports = React.createClass({
       startParam: 'start',
       count: null,
       countParam: 'count',
-      onSync: null,
-      onSave: null,
+      onCreate: null,
+      onRead: null,
+      onUpdate: null,
       onDelete: null,
       onError: null,
       ajaxOptions: null
@@ -145,8 +149,8 @@ module.exports = React.createClass({
           this.setLoading(false);
           this.markFetched();
           this.setData(data);
-          if (this.props.onSync !== null) {
-            this.props.onSync.apply(this, arguments);
+          if (this.props.onRead !== null) {
+            this.props.onRead.apply(this, arguments);
           }
         },
         error: function (jqXhr, textStatus, errorThrown) {
@@ -215,10 +219,11 @@ module.exports = React.createClass({
    * Sync new data to the server
    * @param newData new data to save
    */
-  handleSave: function (newData) {
+  doSave: function (newData) {
+    var isNew = this.props.id === null;
     this.setLoading(true, function () {
       $.ajax($.extend({}, this.props.ajaxOptions, {
-        method: 'POST',
+        method: isNew ? 'POST' : 'PUT',
         data: newData,
         url: this.getUrl(),
         context: this,
@@ -226,8 +231,9 @@ module.exports = React.createClass({
         success: function (data, status, jqXhr) {
           this.setLoading(false);
           this.clearData();
-          if (this.props.onSave !== null) {
-            this.props.onSave.apply(this, arguments);
+          var eHandler = (isNew ? this.props.onCreate : this.props.onUpdate);
+          if (eHandler !== null) {
+            eHandler.apply(this, arguments);
           }
         },
 
@@ -244,7 +250,7 @@ module.exports = React.createClass({
   /**
    * Make a delete request to the URL
    */
-  handleDestroy: function () {
+  doDelete: function () {
     this.setLoading(true, function () {
       $.ajax($.extend({}, this.props.ajaxOptions, {
         method: 'DELETE',
@@ -269,13 +275,17 @@ module.exports = React.createClass({
     });
   },
 
+  /**
+   * Just clone the child element with the data, plus the new event handlers.
+   * @returns {*}
+   */
   render: function () {
     return React.cloneElement(React.Children.only(this.props.children), {
       data: this.state.data,
       fetched: this.state.fetched,
       loading: this.state.loading,
-      onSave: this.handleSave,
-      onDestroy: this.handleDestroy
+      onSave: this.doSave,
+      onDelete: this.doDelete
     });
   }
 });
