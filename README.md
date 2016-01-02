@@ -1,4 +1,4 @@
-# react-sync
+# [react-sync](http://moodysalem.github.io/react-sync)
 A declarative approach to fetching data via jQuery's $.ajax function inspired by Backbone Models and Collections.
 
 # Install
