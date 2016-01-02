@@ -40,13 +40,13 @@ Backbone's sync function as a component. It provides handlers to its children co
 
 
 ### Methods
-#fetch()
+#### fetch()
 Triggers the component to fetch the data. Useful when fetchOnMount or fetchOnNewProps are not set to true.
 
-#doDelete()
+#### doDelete()
 Trigger a delete request on the endpoint
 
-#doSave()
+#### doSave()
 Trigger a POST or PUT depending on whether the ID property is set
 
 ### Child Properties
