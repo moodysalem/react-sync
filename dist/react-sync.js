@@ -140,7 +140,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	      // Whether the data has been fetched
 	      fetched: false,
 	      // Whether an ajax call is in progress
-	      loading: false
+	      loading: false,
+	      // The last URL used to fetch the data
+	      lastFetchUrl: null
 	    };
 	  },
 
@@ -197,9 +199,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	   * Fetch the data at the URL
 	   */
 	  fetch: function () {
-	    this.setLoading(true, function () {
+	    var url = this.getUrl(true);
+	    this.setState({
+	      loading: true,
+	      lastFetchUrl: url
+	    }, function () {
 	      $.ajax($.extend({}, this.props.ajaxOptions, {
-	        url: this.getUrl(true),
+	        url: url,
 	        context: this,
 	        success: function (data, status, jqXhr) {
 	          this.setLoading(false);
@@ -216,7 +222,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            this.props.onError.apply(this, arguments);
 	          }
 	        }
-	      }))
+	      }));
 	    });
 	  },
 
@@ -262,11 +268,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	  },
 
 	  /**
-	   * Fetch if the component is supposed to fetch with props updates
-	   * @param nextProps new props
+	   * Refetch the data if props caused the URL to change
 	   */
-	  componentWillReceiveProps: function (nextProps) {
-	    if (this.props.fetchOnNewProps) {
+	  componentDidUpdate: function (prevProps, prevState) {
+	    if (this.props.fetchOnNewProps && this.getUrl(true) !== this.state.lastFetchUrl) {
 	      this.fetch();
 	    }
 	  },
