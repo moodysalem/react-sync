@@ -8,6 +8,6 @@ It provides handlers to its child component as properties.
 
 # Usage
 
-| Property        | Required |  Usage |
-| ------------- |------------- |-------------|
-| rootUrl  | Yes |  Pass the string representing the root URL of the resource to be fetched. |
+| Property | Type | Required | Default | Usage |
+| -------- | ---- | -------- | ------- | ----- |
+| rootUrl  | String | Yes | None | Pass the root URL of the resource to be fetched |

@@ -25,6 +25,7 @@
   },
   "homepage": "https://github.com/moodysalem/react-sync#readme",
   "dependencies": {
+    "jquery": "^2.1.4",
     "react": "^0.14.5"
   },
   "devDependencies": {
