@@ -1,5 +1,5 @@
 # react-sync
-Backbone's sync function as a component. It provides handlers to its children component to perform operations on the data.
+A declarative approach to fetching data via jQuery's $.ajax function inspired by Backbone Models and Collections.
 
 # Install
     npm install --save react-sync
