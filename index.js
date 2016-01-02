@@ -68,6 +68,7 @@ module.exports = React.createClass({
       onSync: null,
       onSave: null,
       onDelete: null,
+      onError: null,
       ajaxOptions: null
     };
   },
@@ -104,7 +105,7 @@ module.exports = React.createClass({
   /**
    * Get the URL that should be fetched
    */
-  getUrl: function () {
+  getUrl: function (withQueryParams) {
     var url = this.props.rootUrl;
     if (this.props.id !== null) {
       if (url[ url.length - 1 ] === '/') {
@@ -114,43 +115,158 @@ module.exports = React.createClass({
       }
     }
 
-    url = url + '?' + $.param(this.getParameterObject(), this.props.traditionalParams);
+    if (withQueryParams) {
+      url = url + '?' + $.param(this.getParameterObject(), this.props.traditionalParams);
+    }
+    return url;
   },
 
+  /**
+   * Modify the loading state of the object
+   * @param isLoading boolean of whether it's loading
+   */
+  setLoading: function (isLoading, callback) {
+    if (this.isMounted()) {
+      this.setState({
+        loading: isLoading
+      }, callback);
+    }
+  },
 
+  /**
+   * Fetch the data at the URL
+   */
   fetch: function () {
-    this.setState({
-      loading: true
-    }, function () {
-      $.ajax({
-        url: this.getUrl(),
-        success: (function (data) {
+    this.setLoading(true, function () {
+      $.ajax($.extend({}, this.props.ajaxOptions, {
+        url: this.getUrl(true),
+        context: this,
+        success: function (data, status, jqXhr) {
+          this.setLoading(false);
           this.markFetched();
-          if (this.props.onSync !== null){
-            this.props.onSync();
+          this.setData(data);
+          if (this.props.onSync !== null) {
+            this.props.onSync.apply(this, arguments);
           }
-        }).bind(this)
-      })
+        },
+        error: function (jqXhr, textStatus, errorThrown) {
+          this.setLoading(false);
+          this.clearData();
+          if (this.props.onError !== null) {
+            this.props.onError.apply(this, arguments);
+          }
+        }
+      }))
     });
   },
 
-  markFetched: function () {
-    if (!this.state.fetched) {
+  /**
+   * Reset the data in the state object to null
+   */
+  clearData: function () {
+    this.setData(null);
+  },
+
+  /**
+   * Set the data in the state object
+   * @param data to set
+   */
+  setData: function (data) {
+    if (this.isMounted()) {
       this.setState({
-        fetched: true
+        data: data
       });
     }
   },
 
+  /**
+   * Set fetched to true
+   */
+  markFetched: function () {
+    if (this.isMounted()) {
+      if (!this.state.fetched) {
+        this.setState({
+          fetched: true
+        });
+      }
+    }
+  },
+
+  /**
+   * Fetch if the component is supposed to fetch on mount
+   */
   componentDidMount: function () {
     if (this.props.fetchOnMount) {
       this.fetch();
     }
   },
 
-  handleSave: function () {
+  /**
+   * Fetch if the component is supposed to fetch with props updates
+   * @param nextProps new props
+   */
+  componentWillReceiveProps: function (nextProps) {
+    if (this.props.fetchOnNewProps) {
+      this.fetch();
+    }
   },
-  handleDelete: function () {
+
+  /**
+   * Sync new data to the server
+   * @param newData new data to save
+   */
+  handleSave: function (newData) {
+    this.setLoading(true, function () {
+      $.ajax($.extend({}, this.props.ajaxOptions, {
+        method: 'POST',
+        data: newData,
+        url: this.getUrl(),
+        context: this,
+
+        success: function (data, status, jqXhr) {
+          this.setLoading(false);
+          this.clearData();
+          if (this.props.onSave !== null) {
+            this.props.onSave.apply(this, arguments);
+          }
+        },
+
+        error: function (jqXhr, textStatus, errorThrown) {
+          this.setLoading(false);
+          if (this.props.onError !== null) {
+            this.props.onError.apply(this, arguments);
+          }
+        }
+      }));
+    });
+  },
+
+  /**
+   * Make a delete request to the URL
+   */
+  handleDestroy: function () {
+    this.setLoading(true, function () {
+      $.ajax($.extend({}, this.props.ajaxOptions, {
+        method: 'DELETE',
+        url: this.getUrl(),
+        context: this,
+
+        success: function (data, status, jqXhr) {
+          this.setLoading(false);
+          this.clearData();
+          if (this.props.onDelete !== null) {
+            this.props.onDelete.apply(this, arguments);
+          }
+        },
+
+        error: function (jqXhr, textStatus, errorThrown) {
+          this.setLoading(false);
+          if (this.props.onError !== null) {
+            this.props.onError.apply(this, arguments);
+          }
+        }
+      }));
+    });
   },
 
   render: function () {
@@ -159,7 +275,7 @@ module.exports = React.createClass({
       fetched: this.state.fetched,
       loading: this.state.loading,
       onSave: this.handleSave,
-      onDelete: this.handleDelete
+      onDestroy: this.handleDestroy
     });
   }
 });
