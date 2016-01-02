@@ -1,0 +1,35 @@
+{
+  "name": "react-sync",
+  "version": "0.1.0",
+  "description": "A react component that handles data fetching and saving, following Backbone Model and Collection patterns",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/moodysalem/react-sync.git"
+  },
+  "keywords": [
+    "react",
+    "ajax",
+    "backbone",
+    "model",
+    "collection",
+    "sync"
+  ],
+  "author": "Moody Salem",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/moodysalem/react-sync/issues"
+  },
+  "homepage": "https://github.com/moodysalem/react-sync#readme",
+  "dependencies": {
+    "react": "^0.14.5"
+  },
+  "devDependencies": {
+    "mocha": "^2.3.4",
+    "react-addons-test-utils": "^0.14.5",
+    "react-dom": "^0.14.5"
+  }
+}
