@@ -58,61 +58,87 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var React = __webpack_require__(1);
 	var $ = __webpack_require__(2);
+	var omit = __webpack_require__(3);
+	var functionBind = __webpack_require__(7);
+
+	var capFirst = function capitalizeFirstLetter(string) {
+	  return string.charAt(0).toUpperCase() + string.slice(1);
+	};
+
+	var DATA_PROP_NAME = 'data',
+	  LOADING_PROP_NAME = 'loading',
+	  FETCHED_PROP_NAME = 'fetched',
+	  ONSAVE_PROP_NAME = 'onSave',
+	  ONDELETE_PROP_NAME = 'onDelete';
+
+	// shortcut
 	var rpt = React.PropTypes;
+
+	// separated so we can easily get the list of keys
+	var propTypes = {
+	  // The root URL where the data is located
+	  rootUrl: rpt.string.isRequired,
+	  // The ID of the model. Leave blank to fetch a collection
+	  id: rpt.oneOfType([ rpt.string, rpt.number ]),
+
+	  // This is the prefix of the data, loading, and fetched properties passed to the children, as well as the
+	  // suffix given to the onSave and onDelete properties
+	  dataName: rpt.string,
+
+	  // Whether the data should be fetched when this component mounts
+	  fetchOnMount: rpt.bool,
+	  // Whether the data should be fetched when any new properties are received that could change the data
+	  fetchOnNewProps: rpt.bool,
+
+	  // The query parameters to include when fetching the data
+	  params: rpt.object,
+	  // Indicates whether to perform a traditional "shallow" serialization of query parameters
+	  traditionalParams: rpt.bool,
+
+	  // How many records to fetch at a time - leave blank to ignore this parameter
+	  count: rpt.number,
+	  // The name of the parameter that will be passed to the server to indicate how many records to fetch
+	  countParam: rpt.string,
+
+	  // The number of the record on which to start - leave blank to ignore this parameter
+	  start: rpt.number,
+	  // The name of the parameter that will be passed to the server to indicate which record to start on
+	  startParam: rpt.string,
+
+	  // The sorts to send to the server - leave blank to ignore this parameter
+	  sorts: rpt.arrayOf(rpt.shape({
+	    attribute: rpt.string.isRequired,
+	    desc: rpt.bool.isRequired
+	  })),
+	  // The separator between the attribute and whether it's descending or ascending
+	  sortInfoSeparator: rpt.string,
+	  // The name of the query parameter that will be used for sorting
+	  sortParam: rpt.string,
+
+	  // Event Handlers - these are not passed to the child, but rather are used to notify the owner component
+	  // when they occur
+	  onCreate: rpt.func,
+	  onRead: rpt.func,
+	  onUpdate: rpt.func,
+	  onDelete: rpt.func,
+
+	  onError: rpt.func,
+
+	  // Options to pass to ajax calls
+	  ajaxOptions: rpt.object
+	};
+
+	var propNames = Object.keys(propTypes).concat('children');
 
 	module.exports = React.createClass({
 	  displayName: 'React Sync',
 
-	  propTypes: {
-	    // The root URL where the data is located
-	    rootUrl: rpt.string.isRequired,
-	    // The ID of the model. Leave blank to fetch a collection
-	    id: rpt.oneOfType([ rpt.string, rpt.number ]),
-	    // Whether the data should be fetched when this component mounts
-	    fetchOnMount: rpt.bool,
-	    // Whether the data should be fetched when any new properties are received that could change the data
-	    fetchOnNewProps: rpt.bool,
-
-	    // The query parameters to include when fetching the data
-	    params: rpt.object,
-	    // Indicates whether to perform a traditional "shallow" serialization of query parameters
-	    traditionalParams: rpt.bool,
-
-	    // How many records to fetch at a time - leave blank to ignore this parameter
-	    count: rpt.number,
-	    // The name of the parameter that will be passed to the server to indicate how many records to fetch
-	    countParam: rpt.string,
-
-	    // The number of the record on which to start - leave blank to ignore this parameter
-	    start: rpt.number,
-	    // The name of the parameter that will be passed to the server to indicate which record to start on
-	    startParam: rpt.string,
-
-	    // The sorts to send to the server - leave blank to ignore this parameter
-	    sorts: rpt.arrayOf(rpt.shape({
-	      attribute: rpt.string.isRequired,
-	      desc: rpt.bool.isRequired
-	    })),
-	    // The separator between the attribute and whether it's descending or ascending
-	    sortInfoSeparator: rpt.string,
-	    // The name of the query parameter that will be used for sorting
-	    sortParam: rpt.string,
-
-	    // Event Handlers - these are not passed to the child, but rather are used to notify the owner component
-	    // when they occur
-	    onCreate: rpt.func,
-	    onRead: rpt.func,
-	    onUpdate: rpt.func,
-	    onDelete: rpt.func,
-
-	    onError: rpt.func,
-
-	    // Options to pass to ajax calls
-	    ajaxOptions: rpt.object
-	  },
+	  propTypes: propTypes,
 
 	  getDefaultProps: function () {
 	    return {
+	      id: null,
+	      dataName: '',
 	      fetchOnMount: true,
 	      fetchOnNewProps: true,
 	      params: null,
@@ -286,7 +312,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      $.ajax($.extend({}, this.props.ajaxOptions, {
 	        method: isNew ? 'POST' : 'PUT',
 	        data: newData,
-	        url: this.getUrl(),
+	        url: this.getUrl(false),
 	        context: this,
 
 	        success: function (data, status, jqXhr) {
@@ -315,7 +341,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    this.setLoading(true, function () {
 	      $.ajax($.extend({}, this.props.ajaxOptions, {
 	        method: 'DELETE',
-	        url: this.getUrl(),
+	        url: this.getUrl(false),
 	        context: this,
 
 	        success: function (data, status, jqXhr) {
@@ -337,17 +363,35 @@ return /******/ (function(modules) { // webpackBootstrap
 	  },
 
 	  /**
+	   * This function returns an object containing all the props to pass to the child of this component.
+	   *
+	   * Props not used by this react-sync will be included in the props passed to the child. This allows for composing
+	   * this component multiple times with different dataNames, to provide data from multiple sources to a single component.
+	   * @returns {*}
+	   */
+	  getChildProps: function () {
+	    // pass all the props that aren't used by this component to the child
+	    var childProps = omit(this.props, propNames);
+
+	    var dn = this.props.dataName;
+	    var hasDataName = dn.length > 0;
+
+	    childProps[ dn + (hasDataName ? capFirst(DATA_PROP_NAME) : DATA_PROP_NAME) ] = this.state.data;
+	    childProps[ dn + (hasDataName ? capFirst(LOADING_PROP_NAME) : LOADING_PROP_NAME) ] = this.state.loading;
+	    childProps[ dn + (hasDataName ? capFirst(FETCHED_PROP_NAME) : FETCHED_PROP_NAME) ] = this.state.fetched;
+	    childProps[ ONSAVE_PROP_NAME + (hasDataName ? capFirst(dn) : dn) ] = functionBind.call(this.doSave, this);
+	    childProps[ ONDELETE_PROP_NAME + (hasDataName ? capFirst(dn) : dn) ] = functionBind.call(this.doSave, this);
+
+	    return childProps;
+	  },
+
+
+	  /**
 	   * Just clone the child element with the data, plus the new event handlers.
 	   * @returns {*}
 	   */
 	  render: function () {
-	    return React.cloneElement(React.Children.only(this.props.children), {
-	      data: this.state.data,
-	      fetched: this.state.fetched,
-	      loading: this.state.loading,
-	      onSave: this.doSave,
-	      onDelete: this.doDelete
-	    });
+	    return React.cloneElement(React.Children.only(this.props.children), this.getChildProps());
 	  }
 	});
 
@@ -362,6 +406,171 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports) {
 
 	module.exports = __WEBPACK_EXTERNAL_MODULE_2__;
+
+/***/ },
+/* 3 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/*!
+	 * object.omit <https://github.com/jonschlinkert/object.omit>
+	 *
+	 * Copyright (c) 2014-2015, Jon Schlinkert.
+	 * Licensed under the MIT License.
+	 */
+
+	'use strict';
+
+	var isObject = __webpack_require__(4);
+	var forOwn = __webpack_require__(5);
+
+	module.exports = function omit(obj, keys) {
+	  if (!isObject(obj)) return {};
+
+	  var keys = [].concat.apply([], [].slice.call(arguments, 1));
+	  var last = keys[keys.length - 1];
+	  var res = {}, fn;
+
+	  if (typeof last === 'function') {
+	    fn = keys.pop();
+	  }
+
+	  var isFunction = typeof fn === 'function';
+	  if (!keys.length && !isFunction) {
+	    return obj;
+	  }
+
+	  forOwn(obj, function (value, key) {
+	    if (keys.indexOf(key) === -1) {
+
+	      if (!isFunction) {
+	        res[key] = value;
+	      } else if (fn(value, key, obj)) {
+	        res[key] = value;
+	      }
+	    }
+	  });
+	  return res;
+	};
+
+
+/***/ },
+/* 4 */
+/***/ function(module, exports) {
+
+	/*!
+	 * is-extendable <https://github.com/jonschlinkert/is-extendable>
+	 *
+	 * Copyright (c) 2015, Jon Schlinkert.
+	 * Licensed under the MIT License.
+	 */
+
+	'use strict';
+
+	module.exports = function isExtendable(val) {
+	  return typeof val !== 'undefined' && val !== null
+	    && (typeof val === 'object' || typeof val === 'function');
+	};
+
+
+/***/ },
+/* 5 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/*!
+	 * for-own <https://github.com/jonschlinkert/for-own>
+	 *
+	 * Copyright (c) 2014-2015, Jon Schlinkert.
+	 * Licensed under the MIT License.
+	 */
+
+	'use strict';
+
+	var forIn = __webpack_require__(6);
+	var hasOwn = Object.prototype.hasOwnProperty;
+
+	module.exports = function forOwn(o, fn, thisArg) {
+	  forIn(o, function (val, key) {
+	    if (hasOwn.call(o, key)) {
+	      return fn.call(thisArg, o[key], key, o);
+	    }
+	  });
+	};
+
+
+/***/ },
+/* 6 */
+/***/ function(module, exports) {
+
+	/*!
+	 * for-in <https://github.com/jonschlinkert/for-in>
+	 *
+	 * Copyright (c) 2014-2015, Jon Schlinkert.
+	 * Licensed under the MIT License.
+	 */
+
+	'use strict';
+
+	module.exports = function forIn(o, fn, thisArg) {
+	  for (var key in o) {
+	    if (fn.call(thisArg, o[key], key, o) === false) {
+	      break;
+	    }
+	  }
+	};
+
+/***/ },
+/* 7 */
+/***/ function(module, exports) {
+
+	var ERROR_MESSAGE = 'Function.prototype.bind called on incompatible ';
+	var slice = Array.prototype.slice;
+	var toStr = Object.prototype.toString;
+	var funcType = '[object Function]';
+
+	module.exports = function bind(that) {
+	    var target = this;
+	    if (typeof target !== 'function' || toStr.call(target) !== funcType) {
+	        throw new TypeError(ERROR_MESSAGE + target);
+	    }
+	    var args = slice.call(arguments, 1);
+
+	    var binder = function () {
+	        if (this instanceof bound) {
+	            var result = target.apply(
+	                this,
+	                args.concat(slice.call(arguments))
+	            );
+	            if (Object(result) === result) {
+	                return result;
+	            }
+	            return this;
+	        } else {
+	            return target.apply(
+	                that,
+	                args.concat(slice.call(arguments))
+	            );
+	        }
+	    };
+
+	    var boundLength = Math.max(0, target.length - args.length);
+	    var boundArgs = [];
+	    for (var i = 0; i < boundLength; i++) {
+	        boundArgs.push('$' + i);
+	    }
+
+	    var bound = Function('binder', 'return function (' + boundArgs.join(',') + '){ return binder.apply(this,arguments); }')(binder);
+
+	    if (target.prototype) {
+	        var Empty = function Empty() {};
+	        Empty.prototype = target.prototype;
+	        bound.prototype = new Empty();
+	        Empty.prototype = null;
+	    }
+
+	    return bound;
+	};
+
+
 
 /***/ }
 /******/ ])
