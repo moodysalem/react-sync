@@ -20,6 +20,7 @@ A declarative approach to fetching data via jQuery's $.ajax function inspired by
 | -------- | ---- | -------- | ------- | ----- |
 | rootUrl  | String | Yes | None | Pass the root URL of the resource to be fetched |
 | id | String or Number | No | null | Pass the ID of the model if this component is managing data for a single instance. |
+| dataName | String | No | '' | Pass a name for the data, that will be used to get the names of the properties passed to the child component. |
 | fetchOnMount | Boolean | No | True | Whether the component does a GET to refresh its data at the URL when mounted. |
 | fetchOnNewProps | Boolean | No | True | Whether the component does another GET to refresh its data when properties change that would cause the URL to change |
 | params | Object | No | null | Query parameters to be passed when fetching the resource. |
@@ -46,26 +47,43 @@ Triggers the component to fetch the data. Useful when fetchOnMount or fetchOnNew
 #### doDelete()
 Trigger a delete request on the endpoint
 
-#### doSave()
-Trigger a POST or PUT depending on whether the ID property is set
+#### doSave(newData)
+Trigger a POST or PUT depending on whether the ID property is set to the calculated
+URL (without query parameters) sending the data passed in the first parameter
+in the request body.
 
 ### Child Properties
 
-The child of this component receives the following properties:
+The child of this component receives the following properties.
 
 | Property | Type | Description |
 | -------- | ---- | ----------- |
 | data | Any | The data received from the server |
 | fetched | Boolean | Whether the data has ever been fetched from the server. |
 | loading | Boolean | Whether a request is being processed. |
+| onSave | Function | A reference to #doSave |
+| onDelete | Function | A reference to #doDelete |
 
-### Child Callbacks
-The child also receives the following callbacks to trigger actions on its parent.
+If the dataName property is provided, the 'data', 'fetched', and 'loading' properties will be capitalized and prefixed
+by the dataName , while the 'onSave' and 'onDelete' properties will be suffixed with the dataName.
 
-onSave: onSave
-onDelete: doDelete
+e.g. with dataName of 'message', the property names would be messageData, messageFetched, messageLoading, onSaveMessage,
+onDeleteMessage.
 
-# Nesting
-If you need a child component to fetch data from multiple sources, you should compose the components with custom components
-to pass down the properties data, fetched, loading, etc. using different property names. E.g. one component would take
-data and pass it to its child as todoData, and another would pass it down as userData.
+
+# Fetching from multiple sources
+You may need to fetch data from multiple sources. You can do so by composing a component of multiple react-sync elements
+with different dataNames.
+
+e.g. :
+
+    var React = require('react');
+    var ReactDOM = require('react-dom');
+    var reactSync = React.createFactory(require('react-sync'));
+    ReactDOM.render(reactSync({
+        rootUrl: 'myrestfulresource',
+        dataName: 'resourceOne'
+    }, reactSync({
+        rootUrl: 'otherresource',
+        dataName: 'resourceTwo'
+    }, ...)), document.getElementById('app'));

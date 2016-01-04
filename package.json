@@ -29,7 +29,9 @@
   },
   "homepage": "https://github.com/moodysalem/react-sync#readme",
   "dependencies": {
+    "function-bind": "^1.0.2",
     "jquery": "^2.1.4",
+    "object.omit": "^2.0.0",
     "react": "^0.14.5"
   },
   "devDependencies": {
