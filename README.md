@@ -1,4 +1,7 @@
 # [react-sync](http://moodysalem.github.io/react-sync)
+[![Build Status](https://travis-ci.org/moodysalem/react-sync.svg)](https://travis-ci.org/moodysalem/react-sync)
+[![npm version](https://img.shields.io/npm/v/react-sync.svg)](https://www.npmjs.com/package/react-sync)
+
 A declarative approach to fetching data via [superagent](https://github.com/visionmedia/superagent)
 
 # Install
