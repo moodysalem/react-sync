@@ -25,8 +25,10 @@ it('passes the appropriate props to the child component', function () {
   assert(out.props.data === null);
   assert(out.props.fetched === false);
   assert(out.props.loading === false);
-  assert(typeof out.props.onSave === 'function');
-  assert(typeof out.props.onDelete === 'function');
+  assert(typeof out.props.doCreate === 'function');
+  assert(typeof out.props.doRead === 'function');
+  assert(typeof out.props.doUpdate === 'function');
+  assert(typeof out.props.doDelete === 'function');
 });
 
 it('should use the dataName property', function () {
@@ -44,8 +46,10 @@ it('should use the dataName property', function () {
   assert(out.props.clientData === null);
   assert(out.props.clientFetched === false);
   assert(out.props.clientLoading=== false);
-  assert(typeof out.props.onSaveClient === 'function');
-  assert(typeof out.props.onDeleteClient === 'function');
+  assert(typeof out.props.doCreateClient === 'function');
+  assert(typeof out.props.doReadClient === 'function');
+  assert(typeof out.props.doUpdateClient === 'function');
+  assert(typeof out.props.doDeleteClient === 'function');
 });
 
 it('should be nestable', function () {

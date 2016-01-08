@@ -4,12 +4,16 @@
   "description": "A react component that handles data fetching and saving, following Backbone Model and Collection patterns",
   "main": "index.js",
   "scripts": {
-    "test": "mocha test.js",
-    "prebuild": "npm test",
+    "test": "karma start --single-run",
+    "dev": "karma start",
+    "prepublish": "npm test",
     "build:dev": "webpack",
     "build:prd": "ENVIRONMENT=PRODUCTION webpack",
     "build": "npm run build:dev && npm run build:prd"
   },
+  "files": [
+    "index.js"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/moodysalem/react-sync.git"
@@ -29,15 +33,23 @@
   },
   "homepage": "https://github.com/moodysalem/react-sync#readme",
   "dependencies": {
+    "array-without": "0.0.2",
+    "deep-equal": "^1.0.1",
     "function-bind": "^1.0.2",
-    "jquery": "^2.1.4",
+    "object-assign": "^4.0.1",
     "object.omit": "^2.0.0",
-    "react": "^0.14.5"
+    "react": "^0.14.6",
+    "superagent": "^1.6.1"
   },
   "devDependencies": {
+    "karma": "^0.13.19",
+    "karma-chrome-launcher": "^0.2.2",
+    "karma-mocha": "^0.2.1",
+    "karma-webpack": "^1.7.0",
     "mocha": "^2.3.4",
-    "react-addons-test-utils": "^0.14.5",
-    "react-dom": "^0.14.5",
-    "webpack": "^1.12.9"
+    "react-addons-test-utils": "^0.14.6",
+    "react-dom": "^0.14.6",
+    "sinon": "^1.17.2",
+    "webpack": "^1.12.10"
   }
 }

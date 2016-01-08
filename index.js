@@ -1,19 +1,24 @@
 'use strict';
 
 var React = require('react');
-var $ = require('jquery');
+var request = require('superagent');
+var assign = require('object-assign');
 var omit = require('object.omit');
+var without = require('array-without');
 var functionBind = require('function-bind');
+var deepEqual = require('deep-equal');
 
+var noop = function () {
+};
+
+/**
+ * Helper function that capitalizes the first letter in the string
+ * @param string to capitalize
+ * @returns {string} capitalized string
+ */
 var capFirst = function capitalizeFirstLetter(string) {
   return string.charAt(0).toUpperCase() + string.slice(1);
 };
-
-var DATA_PROP_NAME = 'data',
-  LOADING_PROP_NAME = 'loading',
-  FETCHED_PROP_NAME = 'fetched',
-  ONSAVE_PROP_NAME = 'onSave',
-  ONDELETE_PROP_NAME = 'onDelete';
 
 // shortcut
 var rpt = React.PropTypes;
@@ -25,19 +30,26 @@ var propTypes = {
   // The ID of the model. Leave blank to fetch a collection
   id: rpt.oneOfType([ rpt.string, rpt.number ]),
 
+  // If you are just using the component for its callbacks, then you can provide the initial data
+  initialData: rpt.any,
+
   // This is the prefix of the data, loading, and fetched properties passed to the children, as well as the
   // suffix given to the onSave and onDelete properties
   dataName: rpt.string,
 
-  // Whether the data should be fetched when this component mounts
-  fetchOnMount: rpt.bool,
-  // Whether the data should be fetched when any new properties are received that could change the data
-  fetchOnNewProps: rpt.bool,
+  // Whether the component should do a GET when it mounts
+  readOnMount: rpt.bool,
+  // Whether the component should do a GET when props change that would affect the URL or query parameters
+  readOnUpdate: rpt.bool,
 
   // The query parameters to include when fetching the data
   params: rpt.object,
-  // Indicates whether to perform a traditional "shallow" serialization of query parameters
-  traditionalParams: rpt.bool,
+  // The headers to include in all requests
+  headers: rpt.object,
+  // The content-type used for request bodies in POST and PUT requests
+  contentType: rpt.string,
+  // The accept header
+  accept: rpt.string,
 
   // How many records to fetch at a time - leave blank to ignore this parameter
   count: rpt.number,
@@ -65,13 +77,10 @@ var propTypes = {
   onRead: rpt.func,
   onUpdate: rpt.func,
   onDelete: rpt.func,
-
-  onError: rpt.func,
-
-  // Options to pass to ajax calls
-  ajaxOptions: rpt.object
+  onError: rpt.func
 };
 
+// all the properties listed above and the children property are used by this component
 var propNames = Object.keys(propTypes).concat('children');
 
 module.exports = React.createClass({
@@ -82,11 +91,14 @@ module.exports = React.createClass({
   getDefaultProps: function () {
     return {
       id: null,
-      dataName: '',
-      fetchOnMount: true,
-      fetchOnNewProps: true,
+      dataName: null,
+      initialData: null,
+      readOnMount: true,
+      readOnUpdate: true,
       params: null,
-      traditionalParams: true,
+      headers: null,
+      contentType: 'json',
+      accept: 'json',
       sorts: null,
       sortInfoSeparator: '|',
       sortParam: 'sort',
@@ -94,42 +106,47 @@ module.exports = React.createClass({
       startParam: 'start',
       count: null,
       countParam: 'count',
-      onCreate: null,
-      onRead: null,
-      onUpdate: null,
-      onDelete: null,
-      onError: null,
-      ajaxOptions: null
+      onCreate: noop,
+      onRead: noop,
+      onUpdate: noop,
+      onDelete: noop,
+      onError: noop
     };
   },
 
   getInitialState: function () {
     return {
-      // The data received from the AJAX call
-      data: null,
+      // The fetch data
+      data: this.props.initialData,
       // Whether the data has been fetched
       fetched: false,
-      // Whether an ajax call is in progress
-      loading: false,
-      // The last URL used to fetch the data
-      lastFetchUrl: null
+      // All the active requests
+      activeRequests: [],
+      // The URL and parameters used in the last fetch
+      lastGet: null
     };
   },
 
   /**
    * Get an object containing all the parameters that should be sent as query parameters in the URL
    */
-  getParameterObject: function () {
-    var p = $.extend({}, this.props.params);
+  getParameters: function () {
+    var p = assign({}, this.props.params);
     if (this.props.start !== null && this.props.count !== null) {
       p[ this.props.startParam ] = this.props.start;
       p[ this.props.countParam ] = this.props.count;
     }
     if (this.props.sorts !== null && this.props.sorts.length > 0) {
       var sis = this.props.sortInfoSeparator;
-      p[ this.props.sortParam ] = $.map(this.props.sorts, function (sort) {
-        return ((sort.desc) ? 'D' : 'A') + sis + sort.attribute;
-      });
+      var sorts = [];
+
+      // create the string values for the sort parameter
+      for (var i = 0; i < this.props.sorts.length; i++) {
+        var s = this.props.sorts;
+        sorts.push((s.desc ? 'D' : 'A') + sis + s.attribute);
+      }
+
+      p[ this.props.sortParam ] = sorts;
     }
     return p;
   },
@@ -137,8 +154,9 @@ module.exports = React.createClass({
   /**
    * Get the URL that should be fetched
    */
-  getUrl: function (withQueryParams) {
+  getUrl: function () {
     var url = this.props.rootUrl;
+
     if (this.props.id !== null) {
       if (url[ url.length - 1 ] === '/') {
         url = url + this.props.id;
@@ -147,54 +165,141 @@ module.exports = React.createClass({
       }
     }
 
-    if (withQueryParams) {
-      url = url + '?' + $.param(this.getParameterObject(), this.props.traditionalParams);
-    }
     return url;
   },
 
   /**
-   * Modify the loading state of the object
-   * @param isLoading boolean of whether it's loading
+   * POST the data
    */
-  setLoading: function (isLoading, callback) {
-    if (this.isMounted()) {
-      this.setState({
-        loading: isLoading
-      }, callback);
+  doCreate: function (data) {
+    var req = request.post(this.getUrl())
+      .type(this.props.contentType)
+      .accept(this.props.accept)
+      .send(data);
+
+    if (this.props.headers !== null) {
+      req.set(this.props.headers);
     }
+
+    this.setState({
+      activeRequests: this.state.activeRequests.concat(req)
+    }, function () {
+      req.end(functionBind.call(function (err, res) {
+        if (err !== null) {
+          this.props.onError(err);
+        } else {
+          this.props.onCreate(res);
+        }
+
+        this.setState({
+          activeRequests: without(this.state.activeRequests, req)
+        });
+      }, this));
+    });
   },
 
   /**
-   * Fetch the data at the URL
+   * GET the data
    */
-  fetch: function () {
-    var url = this.getUrl(true);
+  doRead: function () {
+    var url = this.getUrl();
+    var params = this.getParameters();
+
+    var req = request.get(this.getUrl())
+      .accept(this.props.accept)
+      .query(params);
+
+    if (this.props.headers !== null) {
+      req.set(this.props.headers);
+    }
+
     this.setState({
-      loading: true,
-      lastFetchUrl: url
-    }, function () {
-      $.ajax($.extend({}, this.props.ajaxOptions, {
+      lastGet: {
         url: url,
-        context: this,
-        success: function (data, status, jqXhr) {
-          this.setLoading(false);
-          this.markFetched();
-          this.setData(data);
-          if (this.props.onRead !== null) {
-            this.props.onRead.apply(this, arguments);
-          }
-        },
-        error: function (jqXhr, textStatus, errorThrown) {
-          this.setLoading(false);
-          this.clearData();
-          if (this.props.onError !== null) {
-            this.props.onError.apply(this, arguments);
-          }
+        params: params
+      },
+      activeRequests: this.state.activeRequests.concat([ req ])
+    }, function () {
+      req.end(functionBind.call(function (err, res) {
+        var data = null;
+
+        // done loading
+        if (err === null) {
+          data = res.body;
+          this.props.onRead(res);
+        } else {
+          this.props.onError(err);
         }
-      }));
+
+        this.setState({
+          data: data,
+          activeRequests: without(this.state.activeRequests, req),
+          fetched: (this.state.fetched || data !== null)
+        });
+      }, this));
     });
   },
+
+  /**
+   * PUT the data passed as the first parameter
+   */
+  doUpdate: function (data) {
+    var req = request.put(this.getUrl())
+      .type(this.props.contentType)
+      .accept(this.props.accept)
+      .send(data);
+
+    if (this.props.headers !== null) {
+      req.set(this.props.headers);
+    }
+
+    this.setState({
+      activeRequests: this.state.activeRequests.concat(req)
+    }, function () {
+      req.end(functionBind.call(function (err, res) {
+        if (err !== null) {
+          this.props.onError(err);
+        } else {
+          this.props.onUpdate(res);
+        }
+
+        this.setState({
+          activeRequests: without(this.state.activeRequests, req)
+        });
+      }, this));
+    });
+  },
+
+  /**
+   * Make a DELETE request to the URL
+   */
+  doDelete: function () {
+    var req = request.del(this.getUrl())
+      .type(this.props.contentType)
+      .accept(this.props.accept)
+      .send(data);
+
+    if (this.props.headers !== null) {
+      req.set(this.props.headers);
+    }
+
+    this.setState({
+      activeRequests: this.state.activeRequests.concat(req)
+    }, function () {
+      req.end(functionBind.call(function (err, res) {
+        if (err !== null) {
+          this.props.onError(err);
+        } else {
+          this.props.onDelete(res);
+        }
+
+        this.setState({
+          activeRequests: without(this.state.activeRequests, req)
+        });
+      }, this));
+    });
+  },
+
 
   /**
    * Reset the data in the state object to null
@@ -232,78 +337,50 @@ module.exports = React.createClass({
    * Fetch if the component is supposed to fetch on mount
    */
   componentDidMount: function () {
-    if (this.props.fetchOnMount) {
-      this.fetch();
+    if (this.props.readOnMount) {
+      this.doRead();
     }
   },
 
   /**
-   * Refetch the data if props caused the URL to change
+   * Abort all active requests when the component unmounts
+   */
+  componentWillUnmount: function () {
+    for (var i = 0; i < this.state.activeRequests.length; i++) {
+      this.state.activeRequests[ i ].abort();
+    }
+  },
+
+  /**
+   * Fetch if the URL changes or the params change
    */
   componentDidUpdate: function (prevProps, prevState) {
-    if (this.props.fetchOnNewProps && this.getUrl(true) !== this.state.lastFetchUrl) {
-      this.fetch();
+    if (this.props.readOnUpdate) {
+      var lastGet = this.state.lastGet;
+      if (lastGet === null || this.getUrl() !== lastGet.url || !deepEqual(this.getParameters(), lastGet.params)) {
+        this.doRead();
+      }
     }
   },
 
   /**
-   * Sync new data to the server
-   * @param newData new data to save
+   * Get the name of a property, based on the dataName and whether it should be a suffix
+   * @param base name to be transformed
+   * @param suffix whether it should be transformed with the dataName as a suffix
+   * @returns {string} new name
    */
-  doSave: function (newData) {
-    var isNew = this.props.id === null;
-    this.setLoading(true, function () {
-      $.ajax($.extend({}, this.props.ajaxOptions, {
-        method: isNew ? 'POST' : 'PUT',
-        data: newData,
-        url: this.getUrl(false),
-        context: this,
+  getPropertyName: function (base, suffix) {
+    var dn = this.props.dataName;
 
-        success: function (data, status, jqXhr) {
-          this.setLoading(false);
-          this.clearData();
-          var eHandler = (isNew ? this.props.onCreate : this.props.onUpdate);
-          if (eHandler !== null) {
-            eHandler.apply(this, arguments);
-          }
-        },
+    if (dn !== null) {
+      if (suffix === true) {
+        return base + capFirst(dn);
+      } else {
+        return dn + capFirst(base);
+      }
+    }
 
-        error: function (jqXhr, textStatus, errorThrown) {
-          this.setLoading(false);
-          if (this.props.onError !== null) {
-            this.props.onError.apply(this, arguments);
-          }
-        }
-      }));
-    });
-  },
-
-  /**
-   * Make a delete request to the URL
-   */
-  doDelete: function () {
-    this.setLoading(true, function () {
-      $.ajax($.extend({}, this.props.ajaxOptions, {
-        method: 'DELETE',
-        url: this.getUrl(false),
-        context: this,
-
-        success: function (data, status, jqXhr) {
-          this.setLoading(false);
-          this.clearData();
-          if (this.props.onDelete !== null) {
-            this.props.onDelete.apply(this, arguments);
-          }
-        },
-
-        error: function (jqXhr, textStatus, errorThrown) {
-          this.setLoading(false);
-          if (this.props.onError !== null) {
-            this.props.onError.apply(this, arguments);
-          }
-        }
-      }));
-    });
+    return base;
   },
 
   /**
@@ -314,17 +391,16 @@ module.exports = React.createClass({
    * @returns {*}
    */
   getChildProps: function () {
-    // pass all the props that aren't used by this component to the child
+    // start with all the props that aren't used by this component
     var childProps = omit(this.props, propNames);
 
-    var dn = this.props.dataName;
-    var hasDataName = dn.length > 0;
-
-    childProps[ dn + (hasDataName ? capFirst(DATA_PROP_NAME) : DATA_PROP_NAME) ] = this.state.data;
-    childProps[ dn + (hasDataName ? capFirst(LOADING_PROP_NAME) : LOADING_PROP_NAME) ] = this.state.loading;
-    childProps[ dn + (hasDataName ? capFirst(FETCHED_PROP_NAME) : FETCHED_PROP_NAME) ] = this.state.fetched;
-    childProps[ ONSAVE_PROP_NAME + (hasDataName ? capFirst(dn) : dn) ] = functionBind.call(this.doSave, this);
-    childProps[ ONDELETE_PROP_NAME + (hasDataName ? capFirst(dn) : dn) ] = functionBind.call(this.doSave, this);
+    childProps[ this.getPropertyName('data') ] = this.state.data;
+    childProps[ this.getPropertyName('loading') ] = this.state.activeRequests.length > 0;
+    childProps[ this.getPropertyName('fetched') ] = this.state.fetched;
+    childProps[ this.getPropertyName('doCreate', true) ] = functionBind.call(this.doCreate, this);
+    childProps[ this.getPropertyName('doRead', true) ] = functionBind.call(this.doCreate, this);
+    childProps[ this.getPropertyName('doUpdate', true) ] = functionBind.call(this.doUpdate, this);
+    childProps[ this.getPropertyName('doDelete', true) ] = functionBind.call(this.doUpdate, this);
 
     return childProps;
   },
