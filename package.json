@@ -4,8 +4,8 @@
   "description": "A react component that handles data fetching and saving, following Backbone Model and Collection patterns",
   "main": "index.js",
   "scripts": {
-    "test": "karma start --single-run",
-    "dev": "karma start",
+    "test": "mocha test",
+    "dev": "mocha test.js --watch",
     "prepublish": "npm test",
     "build:dev": "webpack",
     "build:prd": "ENVIRONMENT=PRODUCTION webpack",
@@ -53,12 +53,10 @@
     "react": "^0.14.6"
   },
   "devDependencies": {
-    "karma": "^0.13.19",
-    "karma-chrome-launcher": "^0.2.2",
-    "karma-mocha": "^0.2.1",
-    "karma-webpack": "^1.7.0",
+    "json-server": "^0.8.6",
     "mocha": "^2.3.4",
     "npm-release": "^1.0.0",
+    "portfinder": "^0.4.0",
     "react-addons-test-utils": "^0.14.6",
     "react-dom": "^0.14.6",
     "sinon": "^1.17.2",
