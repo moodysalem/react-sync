@@ -63,6 +63,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var without = __webpack_require__(10);
 	var deepEqual = __webpack_require__(11);
 	var urlJoin = __webpack_require__(14);
+	var Promise = __webpack_require__(15);
 
 	var noop = function () {
 	};
@@ -272,30 +273,32 @@ return /******/ (function(modules) { // webpackBootstrap
 	    // apply any custom logic
 	    this.props.beforeCreate(req);
 
-	    // add it to the active requests and then fire it off
-	    this.setState({
-	      activeRequests: this.state.activeRequests.concat([ req ])
-	    }, function () {
-	      req.end(function (err, res) {
-	        if (err !== null) {
-	          this.props.onError(err);
-	        } else {
-	          // if response contained data, let's update our data with that response
-	          if (res.body) {
-	            this.updateWithData(res.body, primaryKey);
+	    return new Promise(function (resolve, reject) {
+	      // add it to the active requests and then fire it off
+	      this.setState({
+	        activeRequests: this.state.activeRequests.concat([ req ])
+	      }, function () {
+	        req.end(function (err, res) {
+	          if (err !== null) {
+	            this.props.onError(err);
+	            reject(err);
 	          } else {
-	            this.updateWithData(data, primaryKey);
+	            // if response contained data, let's update our data with that response
+	            if (res.body) {
+	              this.updateWithData(res.body, primaryKey);
+	            } else {
+	              this.updateWithData(data, primaryKey);
+	            }
+	            this.props.onCreate(res);
+	            resolve(res);
 	          }
-	          this.props.onCreate(res);
-	        }
 
-	        this.setState({
-	          activeRequests: without(this.state.activeRequests, req)
-	        });
-	      }.bind(this));
+	          this.setState({
+	            activeRequests: without(this.state.activeRequests, req)
+	          });
+	        }.bind(this));
+	      });
 	    });
-
-	    return req;
 	  },
 
 	  /**
@@ -327,32 +330,36 @@ return /******/ (function(modules) { // webpackBootstrap
 	    // apply any custom logic to the request
 	    this.props.beforeRead(req);
 
-	    this.setState({
-	      lastGet: {
-	        url: url,
-	        params: params
-	      },
-	      activeRequests: newActiveRequests,
-	      activeGet: req
-	    }, function () {
-	      req.end(function (err, res) {
-	        var data = null;
+	    return new Promise(function (resolve, reject) {
+	      this.setState({
+	        lastGet: {
+	          url: url,
+	          params: params
+	        },
+	        activeRequests: newActiveRequests,
+	        activeGet: req
+	      }, function () {
+	        req.end(function (err, res) {
+	          var data = null;
 
-	        // done loading
-	        if (err === null) {
-	          data = res.body;
-	          this.props.onRead(res);
-	        } else {
-	          this.props.onError(err);
-	        }
+	          // done loading
+	          if (err === null) {
+	            data = res.body;
+	            this.props.onRead(res);
+	            resolve(res);
+	          } else {
+	            this.props.onError(err);
+	            reject(err);
+	          }
 
-	        this.setState({
-	          data: data,
-	          activeRequests: without(this.state.activeRequests, req),
-	          fetched: (this.state.fetched || data !== null),
-	          activeGet: null
-	        });
-	      }.bind(this));
+	          this.setState({
+	            data: data,
+	            activeRequests: without(this.state.activeRequests, req),
+	            fetched: (this.state.fetched || data !== null),
+	            activeGet: null
+	          });
+	        }.bind(this));
+	      });
 	    });
 	  },
 
@@ -379,26 +386,30 @@ return /******/ (function(modules) { // webpackBootstrap
 	    // any custom preprocessing
 	    this.props.beforeUpdate(req);
 
-	    this.setState({
-	      activeRequests: this.state.activeRequests.concat([ req ])
-	    }, function () {
-	      req.end(function (err, res) {
-	        if (err !== null) {
-	          this.props.onError(err);
-	        } else {
-	          // if response contained data, let's update our data with that response
-	          if (res.body) {
-	            this.updateWithData(res.body, primaryKey);
+	    return new Promise(function (resolve, reject) {
+	      this.setState({
+	        activeRequests: this.state.activeRequests.concat([ req ])
+	      }, function () {
+	        req.end(function (err, res) {
+	          if (err !== null) {
+	            this.props.onError(err);
+	            reject(err);
 	          } else {
-	            this.updateWithData(data, primaryKey);
+	            // if response contained data, let's update our data with that response
+	            if (res.body) {
+	              this.updateWithData(res.body, primaryKey);
+	            } else {
+	              this.updateWithData(data, primaryKey);
+	            }
+	            this.props.onUpdate(res);
+	            resolve(res);
 	          }
-	          this.props.onUpdate(res);
-	        }
 
-	        this.setState({
-	          activeRequests: without(this.state.activeRequests, req)
-	        });
-	      }.bind(this));
+	          this.setState({
+	            activeRequests: without(this.state.activeRequests, req)
+	          });
+	        }.bind(this));
+	      });
 	    });
 	  },
 
@@ -421,21 +432,25 @@ return /******/ (function(modules) { // webpackBootstrap
 	    // apply any custom logic
 	    this.props.beforeDelete(req);
 
-	    this.setState({
-	      activeRequests: this.state.activeRequests.concat([ req ])
-	    }, function () {
-	      req.end(function (err, res) {
-	        if (err !== null) {
-	          this.props.onError(err);
-	        } else {
-	          this.removeData(primaryKey);
-	          this.props.onDelete(res);
-	        }
+	    return new Promise(function (resolve, reject) {
+	      this.setState({
+	        activeRequests: this.state.activeRequests.concat([ req ])
+	      }, function () {
+	        req.end(function (err, res) {
+	          if (err !== null) {
+	            this.props.onError(err);
+	            reject(err);
+	          } else {
+	            this.removeData(primaryKey);
+	            this.props.onDelete(res);
+	            resolve(res);
+	          }
 
-	        this.setState({
-	          activeRequests: without(this.state.activeRequests, req)
-	        });
-	      }.bind(this));
+	          this.setState({
+	            activeRequests: without(this.state.activeRequests, req)
+	          });
+	        }.bind(this));
+	      });
 	    });
 	  },
 
@@ -2372,6 +2387,381 @@ return /******/ (function(modules) { // webpackBootstrap
 	  var joined = [].slice.call(arguments, 0).join('/');
 	  return normalize(joined);
 	};
+
+/***/ },
+/* 15 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/* WEBPACK VAR INJECTION */(function(setImmediate) {(function(root) {
+
+		// Use polyfill for setImmediate for performance gains
+		var asap = (typeof setImmediate === 'function' && setImmediate) ||
+			function(fn) { setTimeout(fn, 1); };
+
+		// Polyfill for Function.prototype.bind
+		function bind(fn, thisArg) {
+			return function() {
+				fn.apply(thisArg, arguments);
+			}
+		}
+
+		var isArray = Array.isArray || function(value) { return Object.prototype.toString.call(value) === "[object Array]" };
+
+		function Promise(fn) {
+			if (typeof this !== 'object') throw new TypeError('Promises must be constructed via new');
+			if (typeof fn !== 'function') throw new TypeError('not a function');
+			this._state = null;
+			this._value = null;
+			this._deferreds = []
+
+			doResolve(fn, bind(resolve, this), bind(reject, this))
+		}
+
+		function handle(deferred) {
+			var me = this;
+			if (this._state === null) {
+				this._deferreds.push(deferred);
+				return
+			}
+			asap(function() {
+				var cb = me._state ? deferred.onFulfilled : deferred.onRejected
+				if (cb === null) {
+					(me._state ? deferred.resolve : deferred.reject)(me._value);
+					return;
+				}
+				var ret;
+				try {
+					ret = cb(me._value);
+				}
+				catch (e) {
+					deferred.reject(e);
+					return;
+				}
+				deferred.resolve(ret);
+			})
+		}
+
+		function resolve(newValue) {
+			try { //Promise Resolution Procedure: https://github.com/promises-aplus/promises-spec#the-promise-resolution-procedure
+				if (newValue === this) throw new TypeError('A promise cannot be resolved with itself.');
+				if (newValue && (typeof newValue === 'object' || typeof newValue === 'function')) {
+					var then = newValue.then;
+					if (typeof then === 'function') {
+						doResolve(bind(then, newValue), bind(resolve, this), bind(reject, this));
+						return;
+					}
+				}
+				this._state = true;
+				this._value = newValue;
+				finale.call(this);
+			} catch (e) { reject.call(this, e); }
+		}
+
+		function reject(newValue) {
+			this._state = false;
+			this._value = newValue;
+			finale.call(this);
+		}
+
+		function finale() {
+			for (var i = 0, len = this._deferreds.length; i < len; i++) {
+				handle.call(this, this._deferreds[i]);
+			}
+			this._deferreds = null;
+		}
+
+		function Handler(onFulfilled, onRejected, resolve, reject){
+			this.onFulfilled = typeof onFulfilled === 'function' ? onFulfilled : null;
+			this.onRejected = typeof onRejected === 'function' ? onRejected : null;
+			this.resolve = resolve;
+			this.reject = reject;
+		}
+
+		/**
+		 * Take a potentially misbehaving resolver function and make sure
+		 * onFulfilled and onRejected are only called once.
+		 *
+		 * Makes no guarantees about asynchrony.
+		 */
+		function doResolve(fn, onFulfilled, onRejected) {
+			var done = false;
+			try {
+				fn(function (value) {
+					if (done) return;
+					done = true;
+					onFulfilled(value);
+				}, function (reason) {
+					if (done) return;
+					done = true;
+					onRejected(reason);
+				})
+			} catch (ex) {
+				if (done) return;
+				done = true;
+				onRejected(ex);
+			}
+		}
+
+		Promise.prototype['catch'] = function (onRejected) {
+			return this.then(null, onRejected);
+		};
+
+		Promise.prototype.then = function(onFulfilled, onRejected) {
+			var me = this;
+			return new Promise(function(resolve, reject) {
+				handle.call(me, new Handler(onFulfilled, onRejected, resolve, reject));
+			})
+		};
+
+		Promise.all = function () {
+			var args = Array.prototype.slice.call(arguments.length === 1 && isArray(arguments[0]) ? arguments[0] : arguments);
+
+			return new Promise(function (resolve, reject) {
+				if (args.length === 0) return resolve([]);
+				var remaining = args.length;
+				function res(i, val) {
+					try {
+						if (val && (typeof val === 'object' || typeof val === 'function')) {
+							var then = val.then;
+							if (typeof then === 'function') {
+								then.call(val, function (val) { res(i, val) }, reject);
+								return;
+							}
+						}
+						args[i] = val;
+						if (--remaining === 0) {
+							resolve(args);
+						}
+					} catch (ex) {
+						reject(ex);
+					}
+				}
+				for (var i = 0; i < args.length; i++) {
+					res(i, args[i]);
+				}
+			});
+		};
+
+		Promise.resolve = function (value) {
+			if (value && typeof value === 'object' && value.constructor === Promise) {
+				return value;
+			}
+
+			return new Promise(function (resolve) {
+				resolve(value);
+			});
+		};
+
+		Promise.reject = function (value) {
+			return new Promise(function (resolve, reject) {
+				reject(value);
+			});
+		};
+
+		Promise.race = function (values) {
+			return new Promise(function (resolve, reject) {
+				for(var i = 0, len = values.length; i < len; i++) {
+					values[i].then(resolve, reject);
+				}
+			});
+		};
+
+		/**
+		 * Set the immediate function to execute callbacks
+		 * @param fn {function} Function to execute
+		 * @private
+		 */
+		Promise._setImmediateFn = function _setImmediateFn(fn) {
+			asap = fn;
+		};
+
+		if (typeof module !== 'undefined' && module.exports) {
+			module.exports = Promise;
+		} else if (!root.Promise) {
+			root.Promise = Promise;
+		}
+
+	})(this);
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(16).setImmediate))
+
+/***/ },
+/* 16 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/* WEBPACK VAR INJECTION */(function(setImmediate, clearImmediate) {var nextTick = __webpack_require__(17).nextTick;
+	var apply = Function.prototype.apply;
+	var slice = Array.prototype.slice;
+	var immediateIds = {};
+	var nextImmediateId = 0;
+
+	// DOM APIs, for completeness
+
+	exports.setTimeout = function() {
+	  return new Timeout(apply.call(setTimeout, window, arguments), clearTimeout);
+	};
+	exports.setInterval = function() {
+	  return new Timeout(apply.call(setInterval, window, arguments), clearInterval);
+	};
+	exports.clearTimeout =
+	exports.clearInterval = function(timeout) { timeout.close(); };
+
+	function Timeout(id, clearFn) {
+	  this._id = id;
+	  this._clearFn = clearFn;
+	}
+	Timeout.prototype.unref = Timeout.prototype.ref = function() {};
+	Timeout.prototype.close = function() {
+	  this._clearFn.call(window, this._id);
+	};
+
+	// Does not start the time, just sets up the members needed.
+	exports.enroll = function(item, msecs) {
+	  clearTimeout(item._idleTimeoutId);
+	  item._idleTimeout = msecs;
+	};
+
+	exports.unenroll = function(item) {
+	  clearTimeout(item._idleTimeoutId);
+	  item._idleTimeout = -1;
+	};
+
+	exports._unrefActive = exports.active = function(item) {
+	  clearTimeout(item._idleTimeoutId);
+
+	  var msecs = item._idleTimeout;
+	  if (msecs >= 0) {
+	    item._idleTimeoutId = setTimeout(function onTimeout() {
+	      if (item._onTimeout)
+	        item._onTimeout();
+	    }, msecs);
+	  }
+	};
+
+	// That's not how node.js implements it but the exposed api is the same.
+	exports.setImmediate = typeof setImmediate === "function" ? setImmediate : function(fn) {
+	  var id = nextImmediateId++;
+	  var args = arguments.length < 2 ? false : slice.call(arguments, 1);
+
+	  immediateIds[id] = true;
+
+	  nextTick(function onNextTick() {
+	    if (immediateIds[id]) {
+	      // fn.call() is faster so we optimize for the common use-case
+	      // @see http://jsperf.com/call-apply-segu
+	      if (args) {
+	        fn.apply(null, args);
+	      } else {
+	        fn.call(null);
+	      }
+	      // Prevent ids from leaking
+	      exports.clearImmediate(id);
+	    }
+	  });
+
+	  return id;
+	};
+
+	exports.clearImmediate = typeof clearImmediate === "function" ? clearImmediate : function(id) {
+	  delete immediateIds[id];
+	};
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(16).setImmediate, __webpack_require__(16).clearImmediate))
+
+/***/ },
+/* 17 */
+/***/ function(module, exports) {
+
+	// shim for using process in browser
+
+	var process = module.exports = {};
+	var queue = [];
+	var draining = false;
+	var currentQueue;
+	var queueIndex = -1;
+
+	function cleanUpNextTick() {
+	    draining = false;
+	    if (currentQueue.length) {
+	        queue = currentQueue.concat(queue);
+	    } else {
+	        queueIndex = -1;
+	    }
+	    if (queue.length) {
+	        drainQueue();
+	    }
+	}
+
+	function drainQueue() {
+	    if (draining) {
+	        return;
+	    }
+	    var timeout = setTimeout(cleanUpNextTick);
+	    draining = true;
+
+	    var len = queue.length;
+	    while(len) {
+	        currentQueue = queue;
+	        queue = [];
+	        while (++queueIndex < len) {
+	            if (currentQueue) {
+	                currentQueue[queueIndex].run();
+	            }
+	        }
+	        queueIndex = -1;
+	        len = queue.length;
+	    }
+	    currentQueue = null;
+	    draining = false;
+	    clearTimeout(timeout);
+	}
+
+	process.nextTick = function (fun) {
+	    var args = new Array(arguments.length - 1);
+	    if (arguments.length > 1) {
+	        for (var i = 1; i < arguments.length; i++) {
+	            args[i - 1] = arguments[i];
+	        }
+	    }
+	    queue.push(new Item(fun, args));
+	    if (queue.length === 1 && !draining) {
+	        setTimeout(drainQueue, 0);
+	    }
+	};
+
+	// v8 likes predictible objects
+	function Item(fun, array) {
+	    this.fun = fun;
+	    this.array = array;
+	}
+	Item.prototype.run = function () {
+	    this.fun.apply(null, this.array);
+	};
+	process.title = 'browser';
+	process.browser = true;
+	process.env = {};
+	process.argv = [];
+	process.version = ''; // empty string to avoid regexp issues
+	process.versions = {};
+
+	function noop() {}
+
+	process.on = noop;
+	process.addListener = noop;
+	process.once = noop;
+	process.off = noop;
+	process.removeListener = noop;
+	process.removeAllListeners = noop;
+	process.emit = noop;
+
+	process.binding = function (name) {
+	    throw new Error('process.binding is not supported');
+	};
+
+	process.cwd = function () { return '/' };
+	process.chdir = function (dir) {
+	    throw new Error('process.chdir is not supported');
+	};
+	process.umask = function() { return 0; };
+
 
 /***/ }
 /******/ ])
