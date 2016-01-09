@@ -14,7 +14,7 @@ describe('property behavior and naming', function () {
 
   it('passes the appropriate props to the child component', function () {
     renderer.render(ReactSync({
-      rootUrl: SOME_API_URL,
+      url: SOME_API_URL,
       readOnMount: false,
       readOnUpdate: false,
       notRecognized: 'notused'
@@ -35,7 +35,7 @@ describe('property behavior and naming', function () {
 
   it('should use the dataName property', function () {
     renderer.render(ReactSync({
-      rootUrl: SOME_API_URL,
+      url: SOME_API_URL,
       readOnMount: false,
       readOnUpdate: false,
       dataName: 'client'

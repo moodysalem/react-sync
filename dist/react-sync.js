@@ -81,10 +81,8 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	// separated so we can easily get the list of keys
 	var propTypes = {
-	  // The root URL where the data is located
-	  rootUrl: rpt.string.isRequired,
-	  // The ID of the model. Leave blank to fetch a collection
-	  id: rpt.oneOfType([ rpt.string, rpt.number ]),
+	  // The URL minus any query parameters
+	  url: rpt.string.isRequired,
 
 	  // If you are just using the component for its callbacks, then you can provide the initial data
 	  initialData: rpt.any,
@@ -146,7 +144,6 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  getDefaultProps: function () {
 	    return {
-	      id: null,
 	      dataName: null,
 	      initialData: null,
 	      readOnMount: true,
@@ -179,7 +176,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	      // All the active requests
 	      activeRequests: [],
 	      // The URL and parameters used in the last fetch
-	      lastGet: null
+	      lastGet: null,
+	      // The currently active GET request. Only one GET can happen at a time to prevent race conditions
+	      activeGet: null
 	    };
 	  },
 
@@ -208,27 +207,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	  },
 
 	  /**
-	   * Get the URL that should be fetched
-	   */
-	  getUrl: function () {
-	    var url = this.props.rootUrl;
-
-	    if (this.props.id !== null) {
-	      if (url[ url.length - 1 ] === '/') {
-	        url = url + this.props.id;
-	      } else {
-	        url = url + '/' + this.props.id;
-	      }
-	    }
-
-	    return url;
-	  },
-
-	  /**
 	   * POST the data
 	   */
 	  doCreate: function (data) {
-	    var req = request.post(this.getUrl())
+	    var req = request.post(this.props.url)
 	      .type(this.props.contentType)
 	      .accept(this.props.accept)
 	      .send(data);
@@ -258,10 +240,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	   * GET the data
 	   */
 	  doRead: function () {
-	    var url = this.getUrl();
+	    var url = this.props.url;
 	    var params = this.getParameters();
 
-	    var req = request.get(this.getUrl())
+	    var req = request.get(url)
 	      .accept(this.props.accept)
 	      .query(params);
 
@@ -269,12 +251,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	      req.set(this.props.headers);
 	    }
 
+	    if (this.state.activeGet !== null) {
+	      this.state.activeGet.abort();
+	    }
+
 	    this.setState({
 	      lastGet: {
 	        url: url,
 	        params: params
 	      },
-	      activeRequests: this.state.activeRequests.concat([ req ])
+	      activeRequests: this.state.activeRequests.concat([ req ]),
+	      activeGet: req
 	    }, function () {
 	      req.end(functionBind.call(function (err, res) {
 	        var data = null;
@@ -290,7 +277,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this.setState({
 	          data: data,
 	          activeRequests: without(this.state.activeRequests, req),
-	          fetched: (this.state.fetched || data !== null)
+	          fetched: (this.state.fetched || data !== null),
+	          activeGet: null
 	        });
 	      }, this));
 	    });
@@ -300,7 +288,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	   * PUT the data passed as the first parameter
 	   */
 	  doUpdate: function (data) {
-	    var req = request.put(this.getUrl())
+	    var req = request.put(this.props.url)
 	      .type(this.props.contentType)
 	      .accept(this.props.accept)
 	      .send(data);
@@ -330,7 +318,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	   * Make a DELETE request to the URL
 	   */
 	  doDelete: function () {
-	    var req = request.del(this.getUrl())
+	    var req = request.del(this.props.url)
 	      .type(this.props.contentType)
 	      .accept(this.props.accept)
 	      .send(data);
@@ -413,7 +401,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  componentDidUpdate: function (prevProps, prevState) {
 	    if (this.props.readOnUpdate) {
 	      var lastGet = this.state.lastGet;
-	      if (lastGet === null || this.getUrl() !== lastGet.url || !deepEqual(this.getParameters(), lastGet.params)) {
+	      if (lastGet === null || this.props.url !== lastGet.url || !deepEqual(this.getParameters(), lastGet.params)) {
 	        this.doRead();
 	      }
 	    }

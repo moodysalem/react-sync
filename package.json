@@ -38,8 +38,10 @@
     "function-bind": "^1.0.2",
     "object-assign": "^4.0.1",
     "object.omit": "^2.0.0",
-    "react": "^0.14.6",
     "superagent": "^1.6.1"
+  },
+  "peerDependencies": {
+    "react": "^0.14.6"
   },
   "devDependencies": {
     "karma": "^0.13.19",

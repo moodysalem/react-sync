@@ -21,8 +21,7 @@ A declarative approach to fetching data via [superagent](https://github.com/visi
 
 | Property | Type | Required | Default | Usage |
 | -------- | ---- | -------- | ------- | ----- |
-| rootUrl  | String | Yes | None | Pass the root URL of the resource to be fetched |
-| id | String or Number | No | null | Pass the ID of the model if this component is managing data for a single instance. |
+| url  | String | Yes | None | Pass the URL of the resource used for all requests |
 | initialData | Any | No | null | The data before any successful fetches occur |
 | dataName | String | No | null | Pass a name for the data, that will be used to get the names of the properties passed to the child component. |
 | readOnMount | Boolean | No | True | Whether the component does a GET to refresh its data at the URL when mounted. |

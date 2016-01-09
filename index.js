@@ -25,10 +25,8 @@ var rpt = React.PropTypes;
 
 // separated so we can easily get the list of keys
 var propTypes = {
-  // The root URL where the data is located
-  rootUrl: rpt.string.isRequired,
-  // The ID of the model. Leave blank to fetch a collection
-  id: rpt.oneOfType([ rpt.string, rpt.number ]),
+  // The URL minus any query parameters
+  url: rpt.string.isRequired,
 
   // If you are just using the component for its callbacks, then you can provide the initial data
   initialData: rpt.any,
@@ -90,7 +88,6 @@ module.exports = React.createClass({
 
   getDefaultProps: function () {
     return {
-      id: null,
       dataName: null,
       initialData: null,
       readOnMount: true,
@@ -123,7 +120,9 @@ module.exports = React.createClass({
       // All the active requests
       activeRequests: [],
       // The URL and parameters used in the last fetch
-      lastGet: null
+      lastGet: null,
+      // The currently active GET request. Only one GET can happen at a time to prevent race conditions
+      activeGet: null
     };
   },
 
@@ -152,27 +151,10 @@ module.exports = React.createClass({
   },
 
   /**
-   * Get the URL that should be fetched
-   */
-  getUrl: function () {
-    var url = this.props.rootUrl;
-
-    if (this.props.id !== null) {
-      if (url[ url.length - 1 ] === '/') {
-        url = url + this.props.id;
-      } else {
-        url = url + '/' + this.props.id;
-      }
-    }
-
-    return url;
-  },
-
-  /**
    * POST the data
    */
   doCreate: function (data) {
-    var req = request.post(this.getUrl())
+    var req = request.post(this.props.url)
       .type(this.props.contentType)
       .accept(this.props.accept)
       .send(data);
@@ -202,10 +184,10 @@ module.exports = React.createClass({
    * GET the data
    */
   doRead: function () {
-    var url = this.getUrl();
+    var url = this.props.url;
     var params = this.getParameters();
 
-    var req = request.get(this.getUrl())
+    var req = request.get(url)
       .accept(this.props.accept)
       .query(params);
 
@@ -213,12 +195,17 @@ module.exports = React.createClass({
       req.set(this.props.headers);
     }
 
+    if (this.state.activeGet !== null) {
+      this.state.activeGet.abort();
+    }
+
     this.setState({
       lastGet: {
         url: url,
         params: params
       },
-      activeRequests: this.state.activeRequests.concat([ req ])
+      activeRequests: this.state.activeRequests.concat([ req ]),
+      activeGet: req
     }, function () {
       req.end(functionBind.call(function (err, res) {
         var data = null;
@@ -234,7 +221,8 @@ module.exports = React.createClass({
         this.setState({
           data: data,
           activeRequests: without(this.state.activeRequests, req),
-          fetched: (this.state.fetched || data !== null)
+          fetched: (this.state.fetched || data !== null),
+          activeGet: null
         });
       }, this));
     });
@@ -244,7 +232,7 @@ module.exports = React.createClass({
    * PUT the data passed as the first parameter
    */
   doUpdate: function (data) {
-    var req = request.put(this.getUrl())
+    var req = request.put(this.props.url)
       .type(this.props.contentType)
       .accept(this.props.accept)
       .send(data);
@@ -274,7 +262,7 @@ module.exports = React.createClass({
    * Make a DELETE request to the URL
    */
   doDelete: function () {
-    var req = request.del(this.getUrl())
+    var req = request.del(this.props.url)
       .type(this.props.contentType)
       .accept(this.props.accept)
       .send(data);
@@ -357,7 +345,7 @@ module.exports = React.createClass({
   componentDidUpdate: function (prevProps, prevState) {
     if (this.props.readOnUpdate) {
       var lastGet = this.state.lastGet;
-      if (lastGet === null || this.getUrl() !== lastGet.url || !deepEqual(this.getParameters(), lastGet.params)) {
+      if (lastGet === null || this.props.url !== lastGet.url || !deepEqual(this.getParameters(), lastGet.params)) {
         this.doRead();
       }
     }
