@@ -51,20 +51,29 @@ A declarative approach to fetching data via [superagent](https://github.com/visi
 
 
 ### Methods
-#### doRead()
+#### Promise doRead()
 Triggers a new GET request to refresh the data from the URL.
 
-#### doCreate(data, \[primaryKey\])
-Trigger a POST to the URL with the data in the request body. If the primary key is specified, it will be joined to the
-URL.
+Returns a promise that resolves to superagent's response object, and rejects with the error object.
 
-#### doSave(data, \[primaryKey\])
+#### Promise doCreate(data)
+Trigger a POST to the URL with the data in the request body. The component does not use the response data. If you would
+like to update the collection in response to a create event, you should trigger a read.
+
+Returns a promise that resolves to superagent's response object, and rejects with the error object.
+
+#### Promise doSave(data, \[primaryKey\])
 Trigger a PUT to the URL with the data in the request body. If the primary key is specified, it will be joined to the
-URL.
+URL. In addition, if the primary key is specified, the response data will replace the object in the component's data.
 
-#### doDelete(\[primarKey\])
+Returns a promise that resolves to superagent's response object, and rejects with the error object.
+
+#### Promise doDelete(\[primarKey\])
 Trigger a DELETE to the URL with the data in the request body. If the primary key is specified, it will be joined to the
-URL.
+URL. On success, the appropriate data will be removed (the data corresponding to the primary key if specified, otherwise
+all the component data.)
+
+Returns a promise that resolves to superagent's response object, and rejects with the error object.
 
 ### Child Properties
 
@@ -102,3 +111,10 @@ e.g. :
         rootUrl: 'otherresource',
         dataName: 'resourceTwo'
     }, ...)), document.getElementById('app'));
+
+
+## Suggested Architecture
+You should define ReactSync wrappers with URLs and dataNames in a separate file. You can use
+[react-default-props](https://www.npmjs.com/package/react-default-props) to easily create new components from ReactSync
+with default URLs, e.g. a component used for fetching and manipulating posts, or a component for fetching data on a
+specific user.
