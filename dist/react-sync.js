@@ -283,12 +283,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	            this.props.onError(err);
 	            reject(err);
 	          } else {
-	            // if response contained data, let's update our data with that response
-	            if (res.body) {
-	              this.updateWithData(res.body, primaryKey);
-	            } else {
-	              this.updateWithData(data, primaryKey);
-	            }
 	            this.props.onCreate(res);
 	            resolve(res);
 	          }
