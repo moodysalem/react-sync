@@ -53,7 +53,6 @@ The distributed build includes several polyfills, e.g. for Promise and Object.as
 | beforeRead | Function | No | no-op | A function that is called to modify any GET request before it is made |
 | beforeUpdate | Function | No | no-op | A function that is called to modify any PUT request before it is made |
 | beforeDelete | Function | No | no-op | A function that is called to modify any DELETE request before it is made |
-| beforeError | Function | No | no-op | A function to be called when any request fails |
 
 
 ### Methods
