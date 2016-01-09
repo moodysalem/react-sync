@@ -61,8 +61,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	var assign = __webpack_require__(5);
 	var omit = __webpack_require__(6);
 	var without = __webpack_require__(10);
-	var functionBind = __webpack_require__(11);
-	var deepEqual = __webpack_require__(12);
+	var deepEqual = __webpack_require__(11);
+	var joinPath = __webpack_require__(14);
 
 	var noop = function () {
 	};
@@ -83,6 +83,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	var propTypes = {
 	  // The URL minus any query parameters
 	  url: rpt.string.isRequired,
+	  // The attribute of an object that uniquely identifies it
+	  primaryKey: rpt.string,
 
 	  // If you are just using the component for its callbacks, then you can provide the initial data
 	  initialData: rpt.any,
@@ -131,7 +133,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	  onRead: rpt.func,
 	  onUpdate: rpt.func,
 	  onDelete: rpt.func,
-	  onError: rpt.func
+	  onError: rpt.func,
+
+	  // These are called to modify the requests in custom ways before sending
+	  beforeCreate: rpt.func,
+	  beforeRead: rpt.func,
+	  beforeUpdate: rpt.func,
+	  beforeDelete: rpt.func
 	};
 
 	// all the properties listed above and the children property are used by this component
@@ -144,6 +152,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  getDefaultProps: function () {
 	    return {
+	      primaryKey: 'id',
 	      dataName: null,
 	      initialData: null,
 	      readOnMount: true,
@@ -163,7 +172,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	      onRead: noop,
 	      onUpdate: noop,
 	      onDelete: noop,
-	      onError: noop
+	      onError: noop,
+	      beforeCreate: noop,
+	      beforeRead: noop,
+	      beforeUpdate: noop,
+	      beforeDelete: noop
 	    };
 	  },
 
@@ -180,6 +193,27 @@ return /******/ (function(modules) { // webpackBootstrap
 	      // The currently active GET request. Only one GET can happen at a time to prevent race conditions
 	      activeGet: null
 	    };
+	  },
+
+	  /**
+	   * Get the object in the data array that matches
+	   * @param primaryKey the value of the primary key to look for
+	   * @returns {*} the object in the data array with the primary key
+	   */
+	  getByPrimaryKey: function (primaryKey) {
+	    var toReturn = null;
+
+	    if (this.props.data !== null) {
+	      for (var i = 0; i < this.props.data.length; i++) {
+	        var rec = this.props.data[ i ];
+	        if (rec[ this.props.primaryKey ] === primaryKey) {
+	          toReturn = rec;
+	          break;
+	        }
+	      }
+	    }
+
+	    return toReturn;
 	  },
 
 	  /**
@@ -207,6 +241,21 @@ return /******/ (function(modules) { // webpackBootstrap
 	  },
 
 	  /**
+	   * Get the URL concatenated with a primary key, if provided
+	   * @param primaryKey the primary key (optional)
+	   * @returns {string} joined path
+	   */
+	  getUrl: function (primaryKey) {
+	    var url = this.props.url;
+
+	    if (typeof primaryKey !== 'undefined') {
+	      url = joinPath(url, primaryKey);
+	    }
+
+	    return url;
+	  },
+
+	  /**
 	   * POST the data
 	   */
 	  doCreate: function (data) {
@@ -215,25 +264,38 @@ return /******/ (function(modules) { // webpackBootstrap
 	      .accept(this.props.accept)
 	      .send(data);
 
+	    // apply headers
 	    if (this.props.headers !== null) {
 	      req.set(this.props.headers);
 	    }
 
+	    // apply any custom logic
+	    this.props.beforeCreate(req);
+
+	    // add it to the active requests and then fire it off
 	    this.setState({
-	      activeRequests: this.state.activeRequests.concat(req)
+	      activeRequests: this.state.activeRequests.concat([ req ])
 	    }, function () {
-	      req.end(functionBind.call(function (err, res) {
+	      req.end(function (err, res) {
 	        if (err !== null) {
 	          this.props.onError(err);
 	        } else {
+	          // if response contained data, let's update our data with that response
+	          if (res.body) {
+	            this.updateWithData(res.body, primaryKey);
+	          } else {
+	            this.updateWithData(data, primaryKey);
+	          }
 	          this.props.onCreate(res);
 	        }
 
 	        this.setState({
 	          activeRequests: without(this.state.activeRequests, req)
 	        });
-	      }, this));
+	      }.bind(this));
 	    });
+
+	    return req;
 	  },
 
 	  /**
@@ -247,23 +309,33 @@ return /******/ (function(modules) { // webpackBootstrap
 	      .accept(this.props.accept)
 	      .query(params);
 
+	    // apply headers
 	    if (this.props.headers !== null) {
 	      req.set(this.props.headers);
 	    }
 
+	    // we need to make this early so we can remove any active gets that we cancel
+	    var newActiveRequests = this.state.activeRequests.concat([ req ]);
+
+	    // cancel any existing gets
 	    if (this.state.activeGet !== null) {
 	      this.state.activeGet.abort();
+	      // we are manually aborting this one, so remove it from the active requests
+	      newActiveRequests = without(newActiveRequests, this.state.activeGet);
 	    }
+
+	    // apply any custom logic to the request
+	    this.props.beforeRead(req);
 
 	    this.setState({
 	      lastGet: {
 	        url: url,
 	        params: params
 	      },
-	      activeRequests: this.state.activeRequests.concat([ req ]),
+	      activeRequests: newActiveRequests,
 	      activeGet: req
 	    }, function () {
-	      req.end(functionBind.call(function (err, res) {
+	      req.end(function (err, res) {
 	        var data = null;
 
 	        // done loading
@@ -280,15 +352,22 @@ return /******/ (function(modules) { // webpackBootstrap
 	          fetched: (this.state.fetched || data !== null),
 	          activeGet: null
 	        });
-	      }, this));
+	      }.bind(this));
 	    });
 	  },
 
 	  /**
-	   * PUT the data passed as the first parameter
+	   * PUT the data passed as the first parameter to the URL, plus the primary key if provided
 	   */
-	  doUpdate: function (data) {
-	    var req = request.put(this.props.url)
+	  doUpdate: function (data, primaryKey) {
+	    var url = this.props.url;
+
+	    // primary key specified
+	    if (typeof primaryKey !== 'undefined') {
+	      url = joinPath(url, primaryKey);
+	    }
+
+	    var req = request.put()
 	      .type(this.props.contentType)
 	      .accept(this.props.accept)
 	      .send(data);
@@ -297,53 +376,104 @@ return /******/ (function(modules) { // webpackBootstrap
 	      req.set(this.props.headers);
 	    }
 
+	    // any custom preprocessing
+	    this.props.beforeUpdate(req);
+
 	    this.setState({
-	      activeRequests: this.state.activeRequests.concat(req)
+	      activeRequests: this.state.activeRequests.concat([ req ])
 	    }, function () {
-	      req.end(functionBind.call(function (err, res) {
+	      req.end(function (err, res) {
 	        if (err !== null) {
 	          this.props.onError(err);
 	        } else {
+	          // if response contained data, let's update our data with that response
+	          if (res.body) {
+	            this.updateWithData(res.body, primaryKey);
+	          } else {
+	            this.updateWithData(data, primaryKey);
+	          }
 	          this.props.onUpdate(res);
 	        }
 
 	        this.setState({
 	          activeRequests: without(this.state.activeRequests, req)
 	        });
-	      }, this));
+	      }.bind(this));
 	    });
 	  },
 
 	  /**
 	   * Make a DELETE request to the URL
 	   */
-	  doDelete: function () {
-	    var req = request.del(this.props.url)
+	  doDelete: function (primaryKey) {
+	    var url = this.getUrl(primaryKey);
+
+	    var req = request.del(url)
 	      .type(this.props.contentType)
 	      .accept(this.props.accept)
 	      .send(data);
 
+	    // apply any headers
 	    if (this.props.headers !== null) {
 	      req.set(this.props.headers);
 	    }
 
+	    // apply any custom logic
+	    this.props.beforeDelete(req);
+
 	    this.setState({
-	      activeRequests: this.state.activeRequests.concat(req)
+	      activeRequests: this.state.activeRequests.concat([ req ])
 	    }, function () {
-	      req.end(functionBind.call(function (err, res) {
+	      req.end(function (err, res) {
 	        if (err !== null) {
 	          this.props.onError(err);
 	        } else {
+	          this.deleteData(primaryKey);
 	          this.props.onDelete(res);
 	        }
 
 	        this.setState({
 	          activeRequests: without(this.state.activeRequests, req)
 	        });
-	      }, this));
+	      }.bind(this));
 	    });
 	  },
 
+	  /**
+	   * This function updates all the data (if primary key is undefined) or data with the primary key, if found
+	   * @param data new data
+	   * @param primaryKey the primary key of the data provided
+	   */
+	  updateWithData: function (data, primaryKey) {
+	    if (typeof primaryKey === 'undefined') {
+	      this.setData(data);
+	    } else {
+	      var rec = this.getByPrimaryKey(primaryKey);
+	      if (rec !== null) {
+	        // copy the current data, remove the existing record and place the new record in its place
+	        var newData = this.state.data.slice(0);
+	        var insertAt = newData.indexOf(rec);
+	        newData = without(newData, rec);
+	        newData.splice(insertAt, 0, data);
+	        this.setData(newData);
+	      }
+	    }
+	  },
+
+	  /**
+	   * This function removes the data matching the primary key, or all the data if primary key is not defined
+	   * @param primaryKey
+	   */
+	  removeData: function (primaryKey) {
+	    if (typeof primaryKey === 'undefined') {
+	      this.clearData();
+	    } else {
+	      var rec = this.getByPrimaryKey(primaryKey);
+	      if (rec !== null) {
+	        this.setData(without(data, rec));
+	      }
+	    }
+	  },
 
 	  /**
 	   * Reset the data in the state object to null
@@ -441,10 +571,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	    childProps[ this.getPropertyName('data') ] = this.state.data;
 	    childProps[ this.getPropertyName('loading') ] = this.state.activeRequests.length > 0;
 	    childProps[ this.getPropertyName('fetched') ] = this.state.fetched;
-	    childProps[ this.getPropertyName('doCreate', true) ] = functionBind.call(this.doCreate, this);
-	    childProps[ this.getPropertyName('doRead', true) ] = functionBind.call(this.doCreate, this);
-	    childProps[ this.getPropertyName('doUpdate', true) ] = functionBind.call(this.doUpdate, this);
-	    childProps[ this.getPropertyName('doDelete', true) ] = functionBind.call(this.doUpdate, this);
+
+	    // function binding happens automatically by React
+	    childProps[ this.getPropertyName('doCreate', true) ] = this.doCreate;
+	    childProps[ this.getPropertyName('doRead', true) ] = this.doRead;
+	    childProps[ this.getPropertyName('doUpdate', true) ] = this.doUpdate;
+	    childProps[ this.getPropertyName('doDelete', true) ] = this.doDelete;
 
 	    return childProps;
 	  },
@@ -2085,65 +2217,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 /* 11 */
-/***/ function(module, exports) {
-
-	var ERROR_MESSAGE = 'Function.prototype.bind called on incompatible ';
-	var slice = Array.prototype.slice;
-	var toStr = Object.prototype.toString;
-	var funcType = '[object Function]';
-
-	module.exports = function bind(that) {
-	    var target = this;
-	    if (typeof target !== 'function' || toStr.call(target) !== funcType) {
-	        throw new TypeError(ERROR_MESSAGE + target);
-	    }
-	    var args = slice.call(arguments, 1);
-
-	    var binder = function () {
-	        if (this instanceof bound) {
-	            var result = target.apply(
-	                this,
-	                args.concat(slice.call(arguments))
-	            );
-	            if (Object(result) === result) {
-	                return result;
-	            }
-	            return this;
-	        } else {
-	            return target.apply(
-	                that,
-	                args.concat(slice.call(arguments))
-	            );
-	        }
-	    };
-
-	    var boundLength = Math.max(0, target.length - args.length);
-	    var boundArgs = [];
-	    for (var i = 0; i < boundLength; i++) {
-	        boundArgs.push('$' + i);
-	    }
-
-	    var bound = Function('binder', 'return function (' + boundArgs.join(',') + '){ return binder.apply(this,arguments); }')(binder);
-
-	    if (target.prototype) {
-	        var Empty = function Empty() {};
-	        Empty.prototype = target.prototype;
-	        bound.prototype = new Empty();
-	        Empty.prototype = null;
-	    }
-
-	    return bound;
-	};
-
-
-
-/***/ },
-/* 12 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var pSlice = Array.prototype.slice;
-	var objectKeys = __webpack_require__(13);
-	var isArguments = __webpack_require__(14);
+	var objectKeys = __webpack_require__(12);
+	var isArguments = __webpack_require__(13);
 
 	var deepEqual = module.exports = function (actual, expected, opts) {
 	  if (!opts) opts = {};
@@ -2238,7 +2316,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 13 */
+/* 12 */
 /***/ function(module, exports) {
 
 	exports = module.exports = typeof Object.keys === 'function'
@@ -2253,7 +2331,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 14 */
+/* 13 */
 /***/ function(module, exports) {
 
 	var supportsArgumentsClass = (function(){
@@ -2277,6 +2355,348 @@ return /******/ (function(modules) { // webpackBootstrap
 	    false;
 	};
 
+
+/***/ },
+/* 14 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/* WEBPACK VAR INJECTION */(function(process) {var path = __webpack_require__(16);
+	module.exports = function(args1, args2/*, ... argsN*/) {
+		var fullPath = path.join.apply(null, arguments);
+		if (process.platform === 'win32') {
+			fullPath = fullPath.replace(/\\/g, '/');
+		}
+		return fullPath;
+	}
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(15)))
+
+/***/ },
+/* 15 */
+/***/ function(module, exports) {
+
+	// shim for using process in browser
+
+	var process = module.exports = {};
+	var queue = [];
+	var draining = false;
+	var currentQueue;
+	var queueIndex = -1;
+
+	function cleanUpNextTick() {
+	    draining = false;
+	    if (currentQueue.length) {
+	        queue = currentQueue.concat(queue);
+	    } else {
+	        queueIndex = -1;
+	    }
+	    if (queue.length) {
+	        drainQueue();
+	    }
+	}
+
+	function drainQueue() {
+	    if (draining) {
+	        return;
+	    }
+	    var timeout = setTimeout(cleanUpNextTick);
+	    draining = true;
+
+	    var len = queue.length;
+	    while(len) {
+	        currentQueue = queue;
+	        queue = [];
+	        while (++queueIndex < len) {
+	            if (currentQueue) {
+	                currentQueue[queueIndex].run();
+	            }
+	        }
+	        queueIndex = -1;
+	        len = queue.length;
+	    }
+	    currentQueue = null;
+	    draining = false;
+	    clearTimeout(timeout);
+	}
+
+	process.nextTick = function (fun) {
+	    var args = new Array(arguments.length - 1);
+	    if (arguments.length > 1) {
+	        for (var i = 1; i < arguments.length; i++) {
+	            args[i - 1] = arguments[i];
+	        }
+	    }
+	    queue.push(new Item(fun, args));
+	    if (queue.length === 1 && !draining) {
+	        setTimeout(drainQueue, 0);
+	    }
+	};
+
+	// v8 likes predictible objects
+	function Item(fun, array) {
+	    this.fun = fun;
+	    this.array = array;
+	}
+	Item.prototype.run = function () {
+	    this.fun.apply(null, this.array);
+	};
+	process.title = 'browser';
+	process.browser = true;
+	process.env = {};
+	process.argv = [];
+	process.version = ''; // empty string to avoid regexp issues
+	process.versions = {};
+
+	function noop() {}
+
+	process.on = noop;
+	process.addListener = noop;
+	process.once = noop;
+	process.off = noop;
+	process.removeListener = noop;
+	process.removeAllListeners = noop;
+	process.emit = noop;
+
+	process.binding = function (name) {
+	    throw new Error('process.binding is not supported');
+	};
+
+	process.cwd = function () { return '/' };
+	process.chdir = function (dir) {
+	    throw new Error('process.chdir is not supported');
+	};
+	process.umask = function() { return 0; };
+
+
+/***/ },
+/* 16 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/* WEBPACK VAR INJECTION */(function(process) {// Copyright Joyent, Inc. and other Node contributors.
+	//
+	// Permission is hereby granted, free of charge, to any person obtaining a
+	// copy of this software and associated documentation files (the
+	// "Software"), to deal in the Software without restriction, including
+	// without limitation the rights to use, copy, modify, merge, publish,
+	// distribute, sublicense, and/or sell copies of the Software, and to permit
+	// persons to whom the Software is furnished to do so, subject to the
+	// following conditions:
+	//
+	// The above copyright notice and this permission notice shall be included
+	// in all copies or substantial portions of the Software.
+	//
+	// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+	// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+	// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+	// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+	// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+	// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+	// USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+	// resolves . and .. elements in a path array with directory names there
+	// must be no slashes, empty elements, or device names (c:\) in the array
+	// (so also no leading and trailing slashes - it does not distinguish
+	// relative and absolute paths)
+	function normalizeArray(parts, allowAboveRoot) {
+	  // if the path tries to go above the root, `up` ends up > 0
+	  var up = 0;
+	  for (var i = parts.length - 1; i >= 0; i--) {
+	    var last = parts[i];
+	    if (last === '.') {
+	      parts.splice(i, 1);
+	    } else if (last === '..') {
+	      parts.splice(i, 1);
+	      up++;
+	    } else if (up) {
+	      parts.splice(i, 1);
+	      up--;
+	    }
+	  }
+
+	  // if the path is allowed to go above the root, restore leading ..s
+	  if (allowAboveRoot) {
+	    for (; up--; up) {
+	      parts.unshift('..');
+	    }
+	  }
+
+	  return parts;
+	}
+
+	// Split a filename into [root, dir, basename, ext], unix version
+	// 'root' is just a slash, or nothing.
+	var splitPathRe =
+	    /^(\/?|)([\s\S]*?)((?:\.{1,2}|[^\/]+?|)(\.[^.\/]*|))(?:[\/]*)$/;
+	var splitPath = function(filename) {
+	  return splitPathRe.exec(filename).slice(1);
+	};
+
+	// path.resolve([from ...], to)
+	// posix version
+	exports.resolve = function() {
+	  var resolvedPath = '',
+	      resolvedAbsolute = false;
+
+	  for (var i = arguments.length - 1; i >= -1 && !resolvedAbsolute; i--) {
+	    var path = (i >= 0) ? arguments[i] : process.cwd();
+
+	    // Skip empty and invalid entries
+	    if (typeof path !== 'string') {
+	      throw new TypeError('Arguments to path.resolve must be strings');
+	    } else if (!path) {
+	      continue;
+	    }
+
+	    resolvedPath = path + '/' + resolvedPath;
+	    resolvedAbsolute = path.charAt(0) === '/';
+	  }
+
+	  // At this point the path should be resolved to a full absolute path, but
+	  // handle relative paths to be safe (might happen when process.cwd() fails)
+
+	  // Normalize the path
+	  resolvedPath = normalizeArray(filter(resolvedPath.split('/'), function(p) {
+	    return !!p;
+	  }), !resolvedAbsolute).join('/');
+
+	  return ((resolvedAbsolute ? '/' : '') + resolvedPath) || '.';
+	};
+
+	// path.normalize(path)
+	// posix version
+	exports.normalize = function(path) {
+	  var isAbsolute = exports.isAbsolute(path),
+	      trailingSlash = substr(path, -1) === '/';
+
+	  // Normalize the path
+	  path = normalizeArray(filter(path.split('/'), function(p) {
+	    return !!p;
+	  }), !isAbsolute).join('/');
+
+	  if (!path && !isAbsolute) {
+	    path = '.';
+	  }
+	  if (path && trailingSlash) {
+	    path += '/';
+	  }
+
+	  return (isAbsolute ? '/' : '') + path;
+	};
+
+	// posix version
+	exports.isAbsolute = function(path) {
+	  return path.charAt(0) === '/';
+	};
+
+	// posix version
+	exports.join = function() {
+	  var paths = Array.prototype.slice.call(arguments, 0);
+	  return exports.normalize(filter(paths, function(p, index) {
+	    if (typeof p !== 'string') {
+	      throw new TypeError('Arguments to path.join must be strings');
+	    }
+	    return p;
+	  }).join('/'));
+	};
+
+
+	// path.relative(from, to)
+	// posix version
+	exports.relative = function(from, to) {
+	  from = exports.resolve(from).substr(1);
+	  to = exports.resolve(to).substr(1);
+
+	  function trim(arr) {
+	    var start = 0;
+	    for (; start < arr.length; start++) {
+	      if (arr[start] !== '') break;
+	    }
+
+	    var end = arr.length - 1;
+	    for (; end >= 0; end--) {
+	      if (arr[end] !== '') break;
+	    }
+
+	    if (start > end) return [];
+	    return arr.slice(start, end - start + 1);
+	  }
+
+	  var fromParts = trim(from.split('/'));
+	  var toParts = trim(to.split('/'));
+
+	  var length = Math.min(fromParts.length, toParts.length);
+	  var samePartsLength = length;
+	  for (var i = 0; i < length; i++) {
+	    if (fromParts[i] !== toParts[i]) {
+	      samePartsLength = i;
+	      break;
+	    }
+	  }
+
+	  var outputParts = [];
+	  for (var i = samePartsLength; i < fromParts.length; i++) {
+	    outputParts.push('..');
+	  }
+
+	  outputParts = outputParts.concat(toParts.slice(samePartsLength));
+
+	  return outputParts.join('/');
+	};
+
+	exports.sep = '/';
+	exports.delimiter = ':';
+
+	exports.dirname = function(path) {
+	  var result = splitPath(path),
+	      root = result[0],
+	      dir = result[1];
+
+	  if (!root && !dir) {
+	    // No dirname whatsoever
+	    return '.';
+	  }
+
+	  if (dir) {
+	    // It has a dirname, strip trailing slash
+	    dir = dir.substr(0, dir.length - 1);
+	  }
+
+	  return root + dir;
+	};
+
+
+	exports.basename = function(path, ext) {
+	  var f = splitPath(path)[2];
+	  // TODO: make this comparison case-insensitive on windows?
+	  if (ext && f.substr(-1 * ext.length) === ext) {
+	    f = f.substr(0, f.length - ext.length);
+	  }
+	  return f;
+	};
+
+
+	exports.extname = function(path) {
+	  return splitPath(path)[3];
+	};
+
+	function filter (xs, f) {
+	    if (xs.filter) return xs.filter(f);
+	    var res = [];
+	    for (var i = 0; i < xs.length; i++) {
+	        if (f(xs[i], i, xs)) res.push(xs[i]);
+	    }
+	    return res;
+	}
+
+	// String.prototype.substr - negative index don't work in IE8
+	var substr = 'ab'.substr(-1) === 'b'
+	    ? function (str, start, len) { return str.substr(start, len) }
+	    : function (str, start, len) {
+	        if (start < 0) start = str.length + start;
+	        return str.substr(start, len);
+	    }
+	;
+
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(15)))
 
 /***/ }
 /******/ ])
