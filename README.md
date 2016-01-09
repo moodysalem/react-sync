@@ -22,6 +22,7 @@ A declarative approach to fetching data via [superagent](https://github.com/visi
 | Property | Type | Required | Default | Usage |
 | -------- | ---- | -------- | ------- | ----- |
 | url  | String | Yes | None | Pass the URL of the resource used for all requests |
+| primaryKey | String | No | id | The object attribute that uniquely identifies a record in the data set. |
 | initialData | Any | No | null | The data before any successful fetches occur |
 | dataName | String | No | null | Pass a name for the data, that will be used to get the names of the properties passed to the child component. |
 | readOnMount | Boolean | No | True | Whether the component does a GET to refresh its data at the URL when mounted. |
@@ -42,20 +43,28 @@ A declarative approach to fetching data via [superagent](https://github.com/visi
 | onUpdate | Function | No | no-op | A function to be called when a PUT request is successful |
 | onDelete | Function | No | no-op | A function to be called when a DELETE request is successful |
 | onError | Function | No | no-op | A function to be called when any request fails |
+| beforeCreate | Function | No | no-op | A function that is called to modify any POST request before it is made |
+| beforeRead | Function | No | no-op | A function that is called to modify any GET request before it is made |
+| beforeUpdate | Function | No | no-op | A function that is called to modify any PUT request before it is made |
+| beforeDelete | Function | No | no-op | A function that is called to modify any DELETE request before it is made |
+| beforeError | Function | No | no-op | A function to be called when any request fails |
 
 
 ### Methods
 #### doRead()
-Triggers a new GET request to refresh the data
+Triggers a new GET request to refresh the data from the URL.
 
-#### doCreate(data)
-Trigger a POST to the URL with the data in the request body
+#### doCreate(data, \[primaryKey\])
+Trigger a POST to the URL with the data in the request body. If the primary key is specified, it will be joined to the
+URL.
 
-#### doSave(data)
-Trigger a PUT to the URL with the data in the request body
+#### doSave(data, \[primaryKey\])
+Trigger a PUT to the URL with the data in the request body. If the primary key is specified, it will be joined to the
+URL.
 
-#### doDelete()
-Trigger a DELETE to the URL with the data in the request body
+#### doDelete(\[primarKey\])
+Trigger a DELETE to the URL with the data in the request body. If the primary key is specified, it will be joined to the
+URL.
 
 ### Child Properties
 

@@ -5,8 +5,8 @@ var request = require('superagent');
 var assign = require('object-assign');
 var omit = require('object.omit');
 var without = require('array-without');
-var functionBind = require('function-bind');
 var deepEqual = require('deep-equal');
+var joinPath = require('path.join');
 
 var noop = function () {
 };
@@ -27,6 +27,8 @@ var rpt = React.PropTypes;
 var propTypes = {
   // The URL minus any query parameters
   url: rpt.string.isRequired,
+  // The attribute of an object that uniquely identifies it
+  primaryKey: rpt.string,
 
   // If you are just using the component for its callbacks, then you can provide the initial data
   initialData: rpt.any,
@@ -75,7 +77,13 @@ var propTypes = {
   onRead: rpt.func,
   onUpdate: rpt.func,
   onDelete: rpt.func,
-  onError: rpt.func
+  onError: rpt.func,
+
+  // These are called to modify the requests in custom ways before sending
+  beforeCreate: rpt.func,
+  beforeRead: rpt.func,
+  beforeUpdate: rpt.func,
+  beforeDelete: rpt.func
 };
 
 // all the properties listed above and the children property are used by this component
@@ -88,6 +96,7 @@ module.exports = React.createClass({
 
   getDefaultProps: function () {
     return {
+      primaryKey: 'id',
       dataName: null,
       initialData: null,
       readOnMount: true,
@@ -107,7 +116,11 @@ module.exports = React.createClass({
       onRead: noop,
       onUpdate: noop,
       onDelete: noop,
-      onError: noop
+      onError: noop,
+      beforeCreate: noop,
+      beforeRead: noop,
+      beforeUpdate: noop,
+      beforeDelete: noop
     };
   },
 
@@ -124,6 +137,27 @@ module.exports = React.createClass({
       // The currently active GET request. Only one GET can happen at a time to prevent race conditions
       activeGet: null
     };
+  },
+
+  /**
+   * Get the object in the data array that matches
+   * @param primaryKey the value of the primary key to look for
+   * @returns {*} the object in the data array with the primary key
+   */
+  getByPrimaryKey: function (primaryKey) {
+    var toReturn = null;
+
+    if (this.props.data !== null) {
+      for (var i = 0; i < this.props.data.length; i++) {
+        var rec = this.props.data[ i ];
+        if (rec[ this.props.primaryKey ] === primaryKey) {
+          toReturn = rec;
+          break;
+        }
+      }
+    }
+
+    return toReturn;
   },
 
   /**
@@ -151,6 +185,21 @@ module.exports = React.createClass({
   },
 
   /**
+   * Get the URL concatenated with a primary key, if provided
+   * @param primaryKey the primary key (optional)
+   * @returns {string} joined path
+   */
+  getUrl: function (primaryKey) {
+    var url = this.props.url;
+
+    if (typeof primaryKey !== 'undefined') {
+      url = joinPath(url, primaryKey);
+    }
+
+    return url;
+  },
+
+  /**
    * POST the data
    */
   doCreate: function (data) {
@@ -159,25 +208,38 @@ module.exports = React.createClass({
       .accept(this.props.accept)
       .send(data);
 
+    // apply headers
     if (this.props.headers !== null) {
       req.set(this.props.headers);
     }
 
+    // apply any custom logic
+    this.props.beforeCreate(req);
+
+    // add it to the active requests and then fire it off
     this.setState({
-      activeRequests: this.state.activeRequests.concat(req)
+      activeRequests: this.state.activeRequests.concat([ req ])
     }, function () {
-      req.end(functionBind.call(function (err, res) {
+      req.end(function (err, res) {
         if (err !== null) {
           this.props.onError(err);
         } else {
+          // if response contained data, let's update our data with that response
+          if (res.body) {
+            this.updateWithData(res.body, primaryKey);
+          } else {
+            this.updateWithData(data, primaryKey);
+          }
           this.props.onCreate(res);
         }
 
         this.setState({
           activeRequests: without(this.state.activeRequests, req)
         });
-      }, this));
+      }.bind(this));
     });
+
+    return req;
   },
 
   /**
@@ -191,23 +253,33 @@ module.exports = React.createClass({
       .accept(this.props.accept)
       .query(params);
 
+    // apply headers
     if (this.props.headers !== null) {
       req.set(this.props.headers);
     }
 
+    // we need to make this early so we can remove any active gets that we cancel
+    var newActiveRequests = this.state.activeRequests.concat([ req ]);
+
+    // cancel any existing gets
     if (this.state.activeGet !== null) {
       this.state.activeGet.abort();
+      // we are manually aborting this one, so remove it from the active requests
+      newActiveRequests = without(newActiveRequests, this.state.activeGet);
     }
+
+    // apply any custom logic to the request
+    this.props.beforeRead(req);
 
     this.setState({
       lastGet: {
         url: url,
         params: params
       },
-      activeRequests: this.state.activeRequests.concat([ req ]),
+      activeRequests: newActiveRequests,
       activeGet: req
     }, function () {
-      req.end(functionBind.call(function (err, res) {
+      req.end(function (err, res) {
         var data = null;
 
         // done loading
@@ -224,15 +296,22 @@ module.exports = React.createClass({
           fetched: (this.state.fetched || data !== null),
           activeGet: null
         });
-      }, this));
+      }.bind(this));
     });
   },
 
   /**
-   * PUT the data passed as the first parameter
+   * PUT the data passed as the first parameter to the URL, plus the primary key if provided
    */
-  doUpdate: function (data) {
-    var req = request.put(this.props.url)
+  doUpdate: function (data, primaryKey) {
+    var url = this.props.url;
+
+    // primary key specified
+    if (typeof primaryKey !== 'undefined') {
+      url = joinPath(url, primaryKey);
+    }
+
+    var req = request.put()
       .type(this.props.contentType)
       .accept(this.props.accept)
       .send(data);
@@ -241,53 +320,104 @@ module.exports = React.createClass({
       req.set(this.props.headers);
     }
 
+    // any custom preprocessing
+    this.props.beforeUpdate(req);
+
     this.setState({
-      activeRequests: this.state.activeRequests.concat(req)
+      activeRequests: this.state.activeRequests.concat([ req ])
     }, function () {
-      req.end(functionBind.call(function (err, res) {
+      req.end(function (err, res) {
         if (err !== null) {
           this.props.onError(err);
         } else {
+          // if response contained data, let's update our data with that response
+          if (res.body) {
+            this.updateWithData(res.body, primaryKey);
+          } else {
+            this.updateWithData(data, primaryKey);
+          }
           this.props.onUpdate(res);
         }
 
         this.setState({
           activeRequests: without(this.state.activeRequests, req)
         });
-      }, this));
+      }.bind(this));
     });
   },
 
   /**
    * Make a DELETE request to the URL
    */
-  doDelete: function () {
-    var req = request.del(this.props.url)
+  doDelete: function (primaryKey) {
+    var url = this.getUrl(primaryKey);
+
+    var req = request.del(url)
       .type(this.props.contentType)
       .accept(this.props.accept)
       .send(data);
 
+    // apply any headers
     if (this.props.headers !== null) {
       req.set(this.props.headers);
     }
 
+    // apply any custom logic
+    this.props.beforeDelete(req);
+
     this.setState({
-      activeRequests: this.state.activeRequests.concat(req)
+      activeRequests: this.state.activeRequests.concat([ req ])
     }, function () {
-      req.end(functionBind.call(function (err, res) {
+      req.end(function (err, res) {
         if (err !== null) {
           this.props.onError(err);
         } else {
+          this.deleteData(primaryKey);
           this.props.onDelete(res);
         }
 
         this.setState({
           activeRequests: without(this.state.activeRequests, req)
         });
-      }, this));
+      }.bind(this));
     });
   },
 
+  /**
+   * This function updates all the data (if primary key is undefined) or data with the primary key, if found
+   * @param data new data
+   * @param primaryKey the primary key of the data provided
+   */
+  updateWithData: function (data, primaryKey) {
+    if (typeof primaryKey === 'undefined') {
+      this.setData(data);
+    } else {
+      var rec = this.getByPrimaryKey(primaryKey);
+      if (rec !== null) {
+        // copy the current data, remove the existing record and place the new record in its place
+        var newData = this.state.data.slice(0);
+        var insertAt = newData.indexOf(rec);
+        newData = without(newData, rec);
+        newData.splice(insertAt, 0, data);
+        this.setData(newData);
+      }
+    }
+  },
+
+  /**
+   * This function removes the data matching the primary key, or all the data if primary key is not defined
+   * @param primaryKey
+   */
+  removeData: function (primaryKey) {
+    if (typeof primaryKey === 'undefined') {
+      this.clearData();
+    } else {
+      var rec = this.getByPrimaryKey(primaryKey);
+      if (rec !== null) {
+        this.setData(without(data, rec));
+      }
+    }
+  },
 
   /**
    * Reset the data in the state object to null
@@ -385,10 +515,12 @@ module.exports = React.createClass({
     childProps[ this.getPropertyName('data') ] = this.state.data;
     childProps[ this.getPropertyName('loading') ] = this.state.activeRequests.length > 0;
     childProps[ this.getPropertyName('fetched') ] = this.state.fetched;
-    childProps[ this.getPropertyName('doCreate', true) ] = functionBind.call(this.doCreate, this);
-    childProps[ this.getPropertyName('doRead', true) ] = functionBind.call(this.doCreate, this);
-    childProps[ this.getPropertyName('doUpdate', true) ] = functionBind.call(this.doUpdate, this);
-    childProps[ this.getPropertyName('doDelete', true) ] = functionBind.call(this.doUpdate, this);
+
+    // function binding happens automatically by React
+    childProps[ this.getPropertyName('doCreate', true) ] = this.doCreate;
+    childProps[ this.getPropertyName('doRead', true) ] = this.doRead;
+    childProps[ this.getPropertyName('doUpdate', true) ] = this.doUpdate;
+    childProps[ this.getPropertyName('doDelete', true) ] = this.doDelete;
 
     return childProps;
   },
