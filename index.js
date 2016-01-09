@@ -7,6 +7,7 @@ var omit = require('object.omit');
 var without = require('array-without');
 var deepEqual = require('deep-equal');
 var urlJoin = require('url-join');
+var Promise = require('promise-polyfill');
 
 var noop = function () {
 };
@@ -216,30 +217,32 @@ module.exports = React.createClass({
     // apply any custom logic
     this.props.beforeCreate(req);
 
-    // add it to the active requests and then fire it off
-    this.setState({
-      activeRequests: this.state.activeRequests.concat([ req ])
-    }, function () {
-      req.end(function (err, res) {
-        if (err !== null) {
-          this.props.onError(err);
-        } else {
-          // if response contained data, let's update our data with that response
-          if (res.body) {
-            this.updateWithData(res.body, primaryKey);
+    return new Promise(function (resolve, reject) {
+      // add it to the active requests and then fire it off
+      this.setState({
+        activeRequests: this.state.activeRequests.concat([ req ])
+      }, function () {
+        req.end(function (err, res) {
+          if (err !== null) {
+            this.props.onError(err);
+            reject(err);
           } else {
-            this.updateWithData(data, primaryKey);
+            // if response contained data, let's update our data with that response
+            if (res.body) {
+              this.updateWithData(res.body, primaryKey);
+            } else {
+              this.updateWithData(data, primaryKey);
+            }
+            this.props.onCreate(res);
+            resolve(res);
           }
-          this.props.onCreate(res);
-        }
 
-        this.setState({
-          activeRequests: without(this.state.activeRequests, req)
-        });
-      }.bind(this));
+          this.setState({
+            activeRequests: without(this.state.activeRequests, req)
+          });
+        }.bind(this));
+      });
     });
-
-    return req;
   },
 
   /**
@@ -271,32 +274,36 @@ module.exports = React.createClass({
     // apply any custom logic to the request
     this.props.beforeRead(req);
 
-    this.setState({
-      lastGet: {
-        url: url,
-        params: params
-      },
-      activeRequests: newActiveRequests,
-      activeGet: req
-    }, function () {
-      req.end(function (err, res) {
-        var data = null;
+    return new Promise(function (resolve, reject) {
+      this.setState({
+        lastGet: {
+          url: url,
+          params: params
+        },
+        activeRequests: newActiveRequests,
+        activeGet: req
+      }, function () {
+        req.end(function (err, res) {
+          var data = null;
 
-        // done loading
-        if (err === null) {
-          data = res.body;
-          this.props.onRead(res);
-        } else {
-          this.props.onError(err);
-        }
+          // done loading
+          if (err === null) {
+            data = res.body;
+            this.props.onRead(res);
+            resolve(res);
+          } else {
+            this.props.onError(err);
+            reject(err);
+          }
 
-        this.setState({
-          data: data,
-          activeRequests: without(this.state.activeRequests, req),
-          fetched: (this.state.fetched || data !== null),
-          activeGet: null
-        });
-      }.bind(this));
+          this.setState({
+            data: data,
+            activeRequests: without(this.state.activeRequests, req),
+            fetched: (this.state.fetched || data !== null),
+            activeGet: null
+          });
+        }.bind(this));
+      });
     });
   },
 
@@ -323,26 +330,30 @@ module.exports = React.createClass({
     // any custom preprocessing
     this.props.beforeUpdate(req);
 
-    this.setState({
-      activeRequests: this.state.activeRequests.concat([ req ])
-    }, function () {
-      req.end(function (err, res) {
-        if (err !== null) {
-          this.props.onError(err);
-        } else {
-          // if response contained data, let's update our data with that response
-          if (res.body) {
-            this.updateWithData(res.body, primaryKey);
+    return new Promise(function (resolve, reject) {
+      this.setState({
+        activeRequests: this.state.activeRequests.concat([ req ])
+      }, function () {
+        req.end(function (err, res) {
+          if (err !== null) {
+            this.props.onError(err);
+            reject(err);
           } else {
-            this.updateWithData(data, primaryKey);
+            // if response contained data, let's update our data with that response
+            if (res.body) {
+              this.updateWithData(res.body, primaryKey);
+            } else {
+              this.updateWithData(data, primaryKey);
+            }
+            this.props.onUpdate(res);
+            resolve(res);
           }
-          this.props.onUpdate(res);
-        }
 
-        this.setState({
-          activeRequests: without(this.state.activeRequests, req)
-        });
-      }.bind(this));
+          this.setState({
+            activeRequests: without(this.state.activeRequests, req)
+          });
+        }.bind(this));
+      });
     });
   },
 
@@ -365,21 +376,25 @@ module.exports = React.createClass({
     // apply any custom logic
     this.props.beforeDelete(req);
 
-    this.setState({
-      activeRequests: this.state.activeRequests.concat([ req ])
-    }, function () {
-      req.end(function (err, res) {
-        if (err !== null) {
-          this.props.onError(err);
-        } else {
-          this.removeData(primaryKey);
-          this.props.onDelete(res);
-        }
+    return new Promise(function (resolve, reject) {
+      this.setState({
+        activeRequests: this.state.activeRequests.concat([ req ])
+      }, function () {
+        req.end(function (err, res) {
+          if (err !== null) {
+            this.props.onError(err);
+            reject(err);
+          } else {
+            this.removeData(primaryKey);
+            this.props.onDelete(res);
+            resolve(res);
+          }
 
-        this.setState({
-          activeRequests: without(this.state.activeRequests, req)
-        });
-      }.bind(this));
+          this.setState({
+            activeRequests: without(this.state.activeRequests, req)
+          });
+        }.bind(this));
+      });
     });
   },
 

@@ -45,6 +45,7 @@
     "object-assign": "^4.0.1",
     "object.omit": "^2.0.0",
     "path.join": "^1.0.0",
+    "promise-polyfill": "^2.1.4",
     "superagent": "^1.6.1",
     "url-join": "0.0.1"
   },
