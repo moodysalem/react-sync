@@ -7,7 +7,7 @@ var omit = require('object.omit');
 var without = require('array-without');
 var deepEqual = require('deep-equal');
 var urlJoin = require('url-join');
-var Promise = require('es6-promise').Promise;
+var Promise = require('promise-polyfill');
 
 var noop = function () {
 };
@@ -242,7 +242,7 @@ module.exports = React.createClass({
           });
         }.bind(this));
       });
-    });
+    }.bind(this));
   },
 
   /**
@@ -304,7 +304,7 @@ module.exports = React.createClass({
           });
         }.bind(this));
       });
-    });
+    }.bind(this));
   },
 
   /**
@@ -354,7 +354,7 @@ module.exports = React.createClass({
           });
         }.bind(this));
       });
-    });
+    }.bind(this));
   },
 
   /**
@@ -395,7 +395,7 @@ module.exports = React.createClass({
           });
         }.bind(this));
       });
-    });
+    }.bind(this));
   },
 
   /**

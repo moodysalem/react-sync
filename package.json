@@ -41,11 +41,11 @@
   "dependencies": {
     "array-without": "0.0.2",
     "deep-equal": "^1.0.1",
-    "es6-promise": "^3.0.2",
     "function-bind": "^1.0.2",
     "object-assign": "^4.0.1",
     "object.omit": "^2.0.0",
     "path.join": "^1.0.0",
+    "promise-polyfill": "^2.1.4",
     "superagent": "^1.6.1",
     "url-join": "0.0.1"
   },
