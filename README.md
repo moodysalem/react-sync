@@ -7,6 +7,12 @@ A declarative approach to fetching data via [superagent](https://github.com/visi
 # Install
     npm install --save react-sync
 
+# Stability
+The API for this component is still undergoing change.
+
+# Size
+The distributed build includes several polyfills, e.g. for Promise and Object.assign and weighs in at ~25kb.
+
 # Component Usage
 
 ### Code
@@ -14,8 +20,8 @@ A declarative approach to fetching data via [superagent](https://github.com/visi
     var ReactDOM = require('react-dom');
     var reactSync = React.createFactory(require('react-sync'));
     ReactDOM.render(reactSync({
-        rootUrl: 'myrestfulresource'
-    }, ...), document.getElementById('app'));
+        url: 'myrestfulresource'
+    }, myComponentThatNeedsData({ aProp: 'example' })), document.getElementById('app'));
 
 ### Properties
 
@@ -105,12 +111,12 @@ e.g. :
     var ReactDOM = require('react-dom');
     var reactSync = React.createFactory(require('react-sync'));
     ReactDOM.render(reactSync({
-        rootUrl: 'myrestfulresource',
+        url: 'myrestfulresource',
         dataName: 'resourceOne'
     }, reactSync({
-        rootUrl: 'otherresource',
+        url: 'otherresource',
         dataName: 'resourceTwo'
-    }, ...)), document.getElementById('app'));
+    }, myComponentThatNeedsData({ aProp: 'example' }))), document.getElementById('app'));
 
 
 ## Suggested Architecture
