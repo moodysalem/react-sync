@@ -1,6 +1,6 @@
 {
   "name": "react-sync",
-  "version": "0.4.2",
+  "version": "0.5.0",
   "description": "A react component that handles data fetching and saving, following Backbone Model and Collection patterns",
   "main": "index.js",
   "scripts": {
