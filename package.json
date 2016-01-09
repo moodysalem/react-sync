@@ -39,7 +39,8 @@
     "object-assign": "^4.0.1",
     "object.omit": "^2.0.0",
     "path.join": "^1.0.0",
-    "superagent": "^1.6.1"
+    "superagent": "^1.6.1",
+    "url-join": "0.0.1"
   },
   "peerDependencies": {
     "react": "^0.14.6"

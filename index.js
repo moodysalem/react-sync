@@ -6,7 +6,7 @@ var assign = require('object-assign');
 var omit = require('object.omit');
 var without = require('array-without');
 var deepEqual = require('deep-equal');
-var joinPath = require('path.join');
+var urlJoin = require('url-join');
 
 var noop = function () {
 };
@@ -193,7 +193,7 @@ module.exports = React.createClass({
     var url = this.props.url;
 
     if (typeof primaryKey !== 'undefined') {
-      url = joinPath(url, primaryKey);
+      url = urlJoin(url, primaryKey);
     }
 
     return url;
@@ -308,10 +308,10 @@ module.exports = React.createClass({
 
     // primary key specified
     if (typeof primaryKey !== 'undefined') {
-      url = joinPath(url, primaryKey);
+      url = urlJoin(url, primaryKey);
     }
 
-    var req = request.put()
+    var req = request.put(url)
       .type(this.props.contentType)
       .accept(this.props.accept)
       .send(data);
@@ -355,7 +355,7 @@ module.exports = React.createClass({
     var req = request.del(url)
       .type(this.props.contentType)
       .accept(this.props.accept)
-      .send(data);
+      .send();
 
     // apply any headers
     if (this.props.headers !== null) {
