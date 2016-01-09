@@ -4,6 +4,7 @@ var assert = require('assert');
 var React = require('react');
 var portfinder = require('portfinder');
 var request = require('superagent');
+var joinUrl = require('url-join');
 var d = React.DOM;
 var ReactSync = React.createFactory(require('./index.js'));
 
@@ -20,7 +21,7 @@ apiServer.use(router);
 
 describe('ReactSync', function () {
 
-  var API_URL;
+  var API_URL, POSTS_URL;
   var servceInstance;
 
   before(function (done) {
@@ -33,6 +34,7 @@ describe('ReactSync', function () {
       // start the server
       servceInstance = apiServer.listen(port);
       API_URL = 'http://localhost:' + port;
+      POSTS_URL = joinUrl(API_URL, 'posts');
       console.log('listening on ' + API_URL);
       done();
     });
@@ -64,8 +66,6 @@ describe('ReactSync', function () {
   describe('property behavior and naming', function () {
     var ReactTestUtils = require('react-addons-test-utils');
     var renderer = ReactTestUtils.createRenderer();
-
-    var POSTS_URL = API_URL + '/posts';
 
     it('passes the appropriate props to the child component', function () {
       renderer.render(ReactSync({
