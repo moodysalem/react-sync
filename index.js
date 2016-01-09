@@ -147,10 +147,10 @@ module.exports = React.createClass({
   getByPrimaryKey: function (primaryKey) {
     var toReturn = null;
 
-    if (this.props.data !== null) {
-      for (var i = 0; i < this.props.data.length; i++) {
-        var rec = this.props.data[ i ];
-        if (rec[ this.props.primaryKey ] === primaryKey) {
+    if (this.state.data !== null && Array.isArray(this.state.data)) {
+      for (var i = 0; i < this.state.data.length; i++) {
+        var rec = this.state.data[ i ];
+        if (rec[ this.props.primaryKey ] == primaryKey) {
           toReturn = rec;
           break;
         }
@@ -372,7 +372,7 @@ module.exports = React.createClass({
         if (err !== null) {
           this.props.onError(err);
         } else {
-          this.deleteData(primaryKey);
+          this.removeData(primaryKey);
           this.props.onDelete(res);
         }
 
@@ -414,7 +414,7 @@ module.exports = React.createClass({
     } else {
       var rec = this.getByPrimaryKey(primaryKey);
       if (rec !== null) {
-        this.setData(without(data, rec));
+        this.setData(without(this.state.data, rec));
       }
     }
   },
