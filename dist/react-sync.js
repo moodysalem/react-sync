@@ -123,7 +123,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	    attribute: rpt.string.isRequired,
 	    desc: rpt.bool.isRequired
 	  })),
-	  // The separator between the attribute and whether it's descending or ascending
+	  // How 'ascending' and 'descending' are represented in the query parameters
+	  ascendingText: rpt.string,
+	  descendingText: rpt.string,
+	  // The separator between the sort direction and the sort attribute
 	  sortInfoSeparator: rpt.string,
 	  // The name of the query parameter that will be used for sorting
 	  sortParam: rpt.string,
@@ -164,6 +167,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	      accept: 'json',
 	      sorts: null,
 	      sortInfoSeparator: '|',
+	      ascendingText: 'A',
+	      descendingText: 'D',
 	      sortParam: 'sort',
 	      start: null,
 	      startParam: 'start',
@@ -233,7 +238,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      // create the string values for the sort parameter
 	      for (var i = 0; i < this.props.sorts.length; i++) {
 	        var s = this.props.sorts;
-	        sorts.push((s.desc ? 'D' : 'A') + sis + s.attribute);
+	        sorts.push((s.desc ? this.props.descendingText : this.props.ascendingText) + sis + s.attribute);
 	      }
 
 	      p[ this.props.sortParam ] = sorts;
