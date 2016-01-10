@@ -109,13 +109,13 @@ The child of this component receives the following properties.
 
 | Property | Type | Description |
 | -------- | ---- | ----------- |
-| data | Any | The data received from the server |
-| fetched | Boolean | Whether the data has ever been fetched from the server. |
-| loading | Boolean | Whether a request is being processed. |
-| doCreate | Function | A reference to #doCreate |
-| doRead | Function | A reference to #doRead |
-| doUpdate | Function | A reference to #doUpdate |
-| doDelete | Function | A reference to #doDelete |
+| [dataName]data | Any | The data received from the server |
+| [dataName]fetched | Boolean | Whether the data has ever been fetched from the server. |
+| [dataName]loading | Boolean | Whether a request is being processed. |
+| doCreate[dataName] | Function | A reference to #doCreate |
+| doRead[dataName] | Function | A reference to #doRead |
+| doUpdate[dataName] | Function | A reference to #doUpdate |
+| doDelete[dataName] | Function | A reference to #doDelete |
 
 If the dataName property is provided, the 'data', 'fetched', and 'loading' properties will be capitalized and prefixed
 by the dataName , while the 'doCreate', 'doRead', 'doUpdate' and 'doDelete' properties will be suffixed with the dataName.
