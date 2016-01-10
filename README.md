@@ -12,6 +12,7 @@ The API for this component is still undergoing change, but is nearly final. Some
 
 * Should there be options to use this component in such a way that the child can control query parameters,
 sorting and pagination?
+* Should the host property be separate from the path?
 
 # Size
 The distributed build includes several polyfills, e.g. for Promise and Object.assign and weighs in at ~25kb.
