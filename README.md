@@ -28,22 +28,24 @@ The distributed build includes several polyfills, e.g. for Promise and Object.as
 | Property | Type | Required | Default | Usage |
 | -------- | ---- | -------- | ------- | ----- |
 | url  | String | Yes | None | Pass the URL of the resource used for all requests |
-| primaryKey | String | No | id | The object attribute that uniquely identifies a record in the data set. |
+| primaryKey | String | No | 'id' | The object attribute that uniquely identifies a record in the data set. |
 | initialData | Any | No | null | The data before any successful fetches occur |
 | dataName | String | No | null | Pass a name for the data, that will be used to get the names of the properties passed to the child component. |
-| readOnMount | Boolean | No | True | Whether the component does a GET to refresh its data at the URL when mounted. |
-| readOnUpdate | Boolean | No | True | Whether the component does another GET to refresh its data when properties change that would cause the URL or query parameters to change |
+| readOnMount | Boolean | No | true | Whether the component does a GET to refresh its data at the URL when mounted. |
+| readOnUpdate | Boolean | No | true | Whether the component does another GET to refresh its data when properties change that would cause the URL or query parameters to change |
 | params | Object | No | null | Query parameters to be passed when fetching the resource. |
 | headers | Object | No | null | The headers to use in all requests |
-| contentType | String | No | json | How to serialize data in PUTs and POSTs |
-| accept | String | No | json | The accept header used in all requests |
+| contentType | String | No | 'json' | How to serialize data in PUTs and POSTs |
+| accept | String | No | 'json' | The accept header used in all requests |
 | count | Number | No | null | Pass count to indicate the number of results to return. The name of the query parameter comes from the next property. |
-| countParam | String | No | count | The name of the query parameter that is used to tell the server how many records to fetch. |
+| countParam | String | No | 'count' | The name of the query parameter that is used to tell the server how many records to fetch. |
 | start | Number | No | null | Pass start to indicate the number of the record to retrieve to the server. |
-| startParam | String | No | start | The name of the parameter that is used to tell the server the first record to fetch. |
+| startParam | String | No | 'start' | The name of the parameter that is used to tell the server the first record to fetch. |
 | sorts | Array of Object | No | null | A list of sorts that should be applied to the collection when fetched from the server. |
-| sortInfoSeparator | String | No | Pipe | The character used to separate the sort direction (A or D) from the sort attribute |
-| sortParam | String | No | sort | The name of the query parameter that is used to tell the server the sort orders. |
+| ascendingText | String | No | 'A' | How ascending is represented in the sort query parameter |
+| descendingText | String | No | 'D' | How descending is represented in the sort query parameter |
+| sortInfoSeparator | String | No | '\|' | The character used to separate the sort direction (A or D) from the sort attribute |
+| sortParam | String | No | 'sort' | The name of the query parameter that is used to tell the server the sort orders. |
 | onCreate | Function | No | no-op | A function to be called when a POST request is successful |
 | onRead | Function | No | no-op | A function to be called when a GET request is successful |
 | onUpdate | Function | No | no-op | A function to be called when a PUT request is successful |
