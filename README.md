@@ -8,7 +8,10 @@ A declarative approach to fetching data via [superagent](https://github.com/visi
     npm install --save react-sync
 
 # Stability
-The API for this component is still undergoing change.
+The API for this component is still undergoing change, but is nearly final. Some remaining questions are:
+
+* Should there be options to use this component in such a way that the child can control query parameters,
+sorting and pagination?
 
 # Size
 The distributed build includes several polyfills, e.g. for Promise and Object.assign and weighs in at ~25kb.
@@ -25,12 +28,40 @@ The distributed build includes several polyfills, e.g. for Promise and Object.as
 
 ### Properties
 
+The properties can be thematically split into three categories: parameters that you'll customize per API, parameters
+that you'll customize for each resource, and parameters that you'll customize per instance.
+
+You should use wrapper components to create this hierarchy.
+
+#### API-level properties
+
+| Property | Type | Required | Default | Usage |
+| -------- | ---- | -------- | ------- | ----- |
+| countParam | String | No | 'count' | The name of the query parameter that is used to tell the server how many records to fetch. |
+| startParam | String | No | 'start' | The name of the parameter that is used to tell the server the first record to fetch. |
+| sortParam | String | No | 'sort' | The name of the query parameter that is used to tell the server the sort orders. |
+| ascendingText | String | No | 'A' | How ascending is represented in the sort query parameter |
+| descendingText | String | No | 'D' | How descending is represented in the sort query parameter |
+| sortInfoSeparator | String | No | '\|' | The character used to separate the sort direction (A or D) from the sort attribute |
+
+
+#### Resource level properties
+
+| Property | Type | Required | Default | Usage |
+| -------- | ---- | -------- | ------- | ----- |
+| dataName | String | No | null | Pass a name for the data, that will be used to get the names of the properties passed to the child component. |
+| primaryKey | String | No | 'id' | The object attribute that uniquely identifies a record in the data set. |
+| beforeCreate | Function | No | no-op | A function that is called to modify any POST request before it is made |
+| beforeRead | Function | No | no-op | A function that is called to modify any GET request before it is made |
+| beforeUpdate | Function | No | no-op | A function that is called to modify any PUT request before it is made |
+| beforeDelete | Function | No | no-op | A function that is called to modify any DELETE request before it is made |
+
+#### Instance level properties
+
 | Property | Type | Required | Default | Usage |
 | -------- | ---- | -------- | ------- | ----- |
 | url  | String | Yes | None | Pass the URL of the resource used for all requests |
-| primaryKey | String | No | 'id' | The object attribute that uniquely identifies a record in the data set. |
 | initialData | Any | No | null | The data before any successful fetches occur |
-| dataName | String | No | null | Pass a name for the data, that will be used to get the names of the properties passed to the child component. |
 | readOnMount | Boolean | No | true | Whether the component does a GET to refresh its data at the URL when mounted. |
 | readOnUpdate | Boolean | No | true | Whether the component does another GET to refresh its data when properties change that would cause the URL or query parameters to change |
 | params | Object | No | null | Query parameters to be passed when fetching the resource. |
@@ -38,24 +69,13 @@ The distributed build includes several polyfills, e.g. for Promise and Object.as
 | contentType | String | No | 'json' | How to serialize data in PUTs and POSTs |
 | accept | String | No | 'json' | The accept header used in all requests |
 | count | Number | No | null | Pass count to indicate the number of results to return. The name of the query parameter comes from the next property. |
-| countParam | String | No | 'count' | The name of the query parameter that is used to tell the server how many records to fetch. |
 | start | Number | No | null | Pass start to indicate the number of the record to retrieve to the server. |
-| startParam | String | No | 'start' | The name of the parameter that is used to tell the server the first record to fetch. |
 | sorts | Array of Object | No | null | A list of sorts that should be applied to the collection when fetched from the server. |
-| ascendingText | String | No | 'A' | How ascending is represented in the sort query parameter |
-| descendingText | String | No | 'D' | How descending is represented in the sort query parameter |
-| sortInfoSeparator | String | No | '\|' | The character used to separate the sort direction (A or D) from the sort attribute |
-| sortParam | String | No | 'sort' | The name of the query parameter that is used to tell the server the sort orders. |
 | onCreate | Function | No | no-op | A function to be called when a POST request is successful |
 | onRead | Function | No | no-op | A function to be called when a GET request is successful |
 | onUpdate | Function | No | no-op | A function to be called when a PUT request is successful |
 | onDelete | Function | No | no-op | A function to be called when a DELETE request is successful |
 | onError | Function | No | no-op | A function to be called when any request fails |
-| beforeCreate | Function | No | no-op | A function that is called to modify any POST request before it is made |
-| beforeRead | Function | No | no-op | A function that is called to modify any GET request before it is made |
-| beforeUpdate | Function | No | no-op | A function that is called to modify any PUT request before it is made |
-| beforeDelete | Function | No | no-op | A function that is called to modify any DELETE request before it is made |
-
 
 ### Methods
 #### Promise doRead()
@@ -121,7 +141,7 @@ e.g. :
 
 
 ## Suggested Architecture
-You should define ReactSync wrappers with URLs and dataNames in a separate file. You can use
-[react-default-props](https://www.npmjs.com/package/react-default-props) to easily create new components from ReactSync
-with default URLs, e.g. a component used for fetching and manipulating posts, or a component for fetching data on a
-specific user.
+You can use [react-default-props](https://www.npmjs.com/package/react-default-props) to easily create new components
+from ReactSync with defaults depending on the API you're accessing.
+
+For data caching, you'll likely want to use [Service Workers](https://jakearchibald.github.io/isserviceworkerready/).
