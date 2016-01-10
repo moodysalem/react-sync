@@ -1,4 +1,4 @@
-# [react-sync](http://moodysalem.github.io/react-sync)
+# react-sync
 [![Build Status](https://travis-ci.org/moodysalem/react-sync.svg)](https://travis-ci.org/moodysalem/react-sync)
 [![npm version](https://img.shields.io/npm/v/react-sync.svg)](https://www.npmjs.com/package/react-sync)
 
@@ -16,6 +16,9 @@ sorting and pagination?
 
 # Size
 The distributed build includes several polyfills, e.g. for Promise and Object.assign and weighs in at ~25kb.
+
+# Demo
+[Demo](http://moodysalem.github.io/react-sync)
 
 # Component Usage
 
