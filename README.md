@@ -33,7 +33,7 @@ that you'll customize for each resource, and parameters that you'll customize pe
 
 You should use wrapper components to create this hierarchy.
 
-#### API-level properties
+#### API level properties
 
 | Property | Type | Required | Default | Usage |
 | -------- | ---- | -------- | ------- | ----- |
