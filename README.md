@@ -17,7 +17,7 @@ sorting and pagination?
 * Should a change in the initialData prop reset the component state?
 
 # Size
-The distributed build includes several polyfills, e.g. for Promise and Object.assign and weighs in at ~25kb.
+The distributed build includes several polyfills, e.g. for Promise and Object.assign and weighs in at ~24kB (7.3kB gzipped).
 
 # Demo
 [Demo](http://moodysalem.github.io/react-sync)
