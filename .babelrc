@@ -1,0 +1,11 @@
+{
+  "presets": [
+    "stage-1",
+    "es2015",
+    "react"
+  ],
+  "plugins": [
+    "transform-strict-mode",
+    "transform-class-properties"
+  ]
+}

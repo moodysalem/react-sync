@@ -1,12 +1,11 @@
 var webpack = require('webpack');
-var min = process && process.env && process.env.ENVIRONMENT === 'PRODUCTION';
 
 module.exports = {
-  entry: "./index.js",
+  entry: "./src/index.jsx",
 
   output: {
     path: "./dist",
-    filename: "react-sync" + (min ? '.min' : '') + '.js',
+    filename: 'react-sync.js',
     library: "ReactSync",
     libraryTarget: "umd"
   },
@@ -15,7 +14,18 @@ module.exports = {
     'react': { commonjs: 'react', commonjs2: 'react', amd: 'react', root: 'React' }
   },
 
-  plugins: min ? [
-    new webpack.optimize.UglifyJsPlugin()
-  ] : []
+  module: {
+    loaders: [
+      // interpret ES6
+      {
+        test: /\.jsx?$/,
+        exclude: /node_modules/,
+        loader: 'babel'
+      }
+    ]
+  },
+
+  resolve: {
+    extensions: [ '', '.js', '.jsx' ]
+  }
 };
