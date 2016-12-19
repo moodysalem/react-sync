@@ -4,7 +4,7 @@
 A declarative approach to fetching data using [HTML5 Fetch](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API)
 
 ## Status
-This project has been rewritten between versions 0.5 to 0.6 to be only responsible for fetching data. A demo is available in the index.html file.
+This project has been rewritten between versions 0.5 to 0.6 to be only responsible for fetching data. A demo is available in the [index.html](https://github.com/moodysalem/react-sync/blob/gh-pages/index.html) file.
 
 ## Purpose
 `react-sync` provides a single higher order component used for retrieving data from your APIs. Manipulating and rendering the data is your responsibility, but refreshing the data from the API is as simple as changing a query parameter.
