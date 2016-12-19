@@ -4,7 +4,7 @@
 A declarative approach to fetching data using [HTML5 Fetch](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API)
 
 ## Status
-This project has been rewritten to be only responsible for fetching data. A demo is available in the index.html file.
+This project has been rewritten between versions 0.5 to 0.6 to be only responsible for fetching data. A demo is available in the index.html file. It provides a simple declarative approach to retrieving data from your APIs. Manipulating the data is your responsibility, but refreshing the data from the API is as simple as changing an arbitrary unused query parameter. The source is relatively short and very easy to understand (< 100 LOC) and the UMD module is < 15kb uncompressed and unminified.
 
 ## Install
 `npm install --save react-sync`
