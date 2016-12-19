@@ -8,3 +8,6 @@ cache:
   - "$HOME/.yarn-cache"
 install:
 - "yarn"
+branches:
+  only:
+  - "gh-pages"
