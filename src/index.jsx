@@ -9,21 +9,27 @@ export default class ReactSync extends PureComponent {
   state = {
     // The pending promise
     promise: null,
-    // The data returned from fetching the URL
-    response: null,
-    // The error that occurred
+
+    // The data returned from handling the response
+    data: null,
+
+    // The error that occurred during the fetch
     error: null
   };
 
-  // the incremented # of the fetch we are working on
+  // the incremented # of the fetch we are working on - used to ignore previous requests
   _fetchKey = 0;
 
-  fetchFromProps = () => this.fetchData(this.props);
-
-  fetchData({ url, params, headers, queryStringFunction }) {
+  fetchData({ resource: { url, params, headers }, fetchConfig: { queryStringFunction, toData } }) {
     // this is the only fetch that matters
     const myFetchKey = this._fetchKey++;
-    const isCancelled = () => myFetchKey !== this._fetchKey;
+
+    // only updates state as long as the promise is not cancelled
+    const updateState = state => {
+      if (myFetchKey === this._fetchKey) {
+        this.setState(state);
+      }
+    };
 
     this.setState({
       // always clear old errors, never clear old responses
@@ -31,38 +37,27 @@ export default class ReactSync extends PureComponent {
 
       promise: fetch(`${url}?${queryStringFunction(params)}`, { headers })
         .then(
-          response => {
-            if (isCancelled()) {
-              return;
-            }
-
-            this.setState({ response, promise: null });
-          },
-          error => {
-            if (isCancelled()) {
-              return;
-            }
-
-            this.setState({ error, promise: null });
-          }
+          response => toData(response)
+        )
+        .then(
+          data => updateState({ data, promise: null })
+        )
+        .catch(
+          error => updateState({ error, promise: null })
         )
     });
   }
 
   componentDidMount() {
-    this.fetchFromProps();
+    this.fetchData(this.props);
   }
 
-  componentWillReceiveProps({ url, params, headers, queryStringFunction }) {
-    const {
-      url: oldUrl, params: oldParams, headers: oldHeaders, queryStringFunction: oldQueryStringFunction
-    } = this.props;
+  componentWillReceiveProps({ resource, fetchConfig }) {
+    const { resource: oldResource, fetchConfig: oldFetchConfig } = this.props;
 
     // if the url, parameters, or headers changed, we need to start over
-    if (
-      url !== oldUrl || oldQueryStringFunction !== queryStringFunction || !deepEqual(params, oldParams) || !deepEqual(headers, oldHeaders)
-    ) {
-      this.fetchData({ url, params, headers, queryStringFunction });
+    if (!deepEqual(resource, oldResource) || !deepEqual(fetchConfig, oldFetchConfig)) {
+      this.fetchData(this.props);
     }
   }
 
