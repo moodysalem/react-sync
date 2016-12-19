@@ -1,6 +1,5 @@
-# react-sync
-[![Build Status](https://travis-ci.org/moodysalem/react-sync.svg)](https://travis-ci.org/moodysalem/react-sync)
-[![npm version](https://img.shields.io/npm/v/react-sync.svg)](https://www.npmjs.com/package/react-sync)
+# [![Build Status](https://travis-ci.org/moodysalem/react-sync.svg)](https://travis-ci.org/moodysalem/react-sync) [![npm version](https://img.shields.io/npm/v/react-sync.svg)](https://www.npmjs.com/package/react-sync) react-sync
+
 
 A declarative approach to fetching data using [HTML5 Fetch](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API)
 
