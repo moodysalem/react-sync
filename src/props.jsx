@@ -1,6 +1,10 @@
-import { PropTypes } from 'react';
+import { PropTypes } from "react";
+import qs from "./query-string";
 
 export const types = {
+  // the name of the prop passed down to the child
+  propName: PropTypes.string,
+
   // The base URL without any query parameters
   url: PropTypes.string.isRequired,
 
@@ -9,20 +13,16 @@ export const types = {
   // The headers to include in all requests
   headers: PropTypes.object,
 
-  // The accept header sent in all requests
-  accept: PropTypes.string,
-
   // The query parameters to include in GET requests
   params: PropTypes.object,
 
-  // The content-type used for request bodies in POST and PUT requests
-  contentType: PropTypes.string
+  // converts an object to a query string for the url
+  queryStringFunction: PropTypes.func
 };
 
 export const defaults = {
-  primaryKey: 'id',
+  propName: 'sync',
   headers: null,
-  accept: 'json',
   params: null,
-  contentType: 'json'
+  queryStringFunction: qs
 };
