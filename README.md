@@ -22,6 +22,11 @@ OR
 
 `yarn add react-sync`
 
-Alternately this project builds to a UMD module named ReactSync, so you can include a rawgit script tag in your page referencing v0.6.4 or later and look for `window.ReactSync`, e.g.: 
+Alternately this project builds to a UMD module named ReactSync, so you can include a rawgit script tag in your page e.g. v0.6.4: 
 
 `<script src="https://cdn.rawgit.com/moodysalem/react-sync/ef1770eb582abe6da474134e0c663233833275e4/dist/react-sync.js" type="text/javascript"></script>`
+
+## Usage
+If you are using npm, simply `import ReactSync from 'react-sync';`
+
+If you have included the script as a tag on the page and are not using webpack, then you should look for `window.ReactSync`
