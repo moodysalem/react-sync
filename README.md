@@ -8,4 +8,12 @@ A declarative approach to fetching data using [HTML5 Fetch](https://developer.mo
 This project is undergoing a rewrite to use ES6, HTML5 fetch, and reduce its responsibility.
 
 ## Install
-`npm install --save react-sync` OR `yarn add react-sync`
+`npm install --save react-sync`
+
+OR
+
+`yarn add react-sync`
+
+Alternately this project builds to a UMD module named ReactSync, so you can include a rawgit script tag in your page referencing v0.6.4 or later and look for `window.ReactSync`, e.g.: 
+
+`<script src="https://cdn.rawgit.com/moodysalem/react-sync/ef1770eb582abe6da474134e0c663233833275e4/dist/react-sync.js" type="text/javascript"></script>`
