@@ -5,7 +5,7 @@
 A declarative approach to fetching data using [HTML5 Fetch](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API)
 
 ## Status
-This project is undergoing a rewrite to use ES6, HTML5 fetch, and reduce its responsibility.
+This project has been rewritten to be only responsible for fetching data. A demo is available in the index.html file.
 
 ## Install
 `npm install --save react-sync`
