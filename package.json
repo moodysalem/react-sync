@@ -1,6 +1,6 @@
 {
   "name": "react-sync",
-  "version": "0.6.2",
+  "version": "0.6.3",
   "description": "A react component that handles data fetching and saving",
   "main": "dist/react-sync.js",
   "scripts": {
