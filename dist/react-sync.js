@@ -99,16 +99,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return _ret = (_temp = (_this = _possibleConstructorReturn(this, (_ref = ReactSync.__proto__ || Object.getPrototypeOf(ReactSync)).call.apply(_ref, [this].concat(args))), _this), _this.state = {
 	      // The pending promise
 	      promise: null,
-	      // The data returned from fetching the URL
-	      response: null,
-	      // The error that occurred
+
+	      // The data returned from handling the response
+	      data: null,
+
+	      // The error that occurred during the fetch
 	      error: null
-	    }, _this._fetchKey = 0, _this.fetchFromProps = function () {
-	      return _this.fetchData(_this.props);
-	    }, _temp), _possibleConstructorReturn(_this, _ret);
+	    }, _this._fetchKey = 0, _temp), _possibleConstructorReturn(_this, _ret);
 	  }
 
-	  // the incremented # of the fetch we are working on
+	  // the incremented # of the fetch we are working on - used to ignore previous requests
 
 
 	  _createClass(ReactSync, [{
@@ -116,15 +116,22 @@ return /******/ (function(modules) { // webpackBootstrap
 	    value: function fetchData(_ref2) {
 	      var _this2 = this;
 
-	      var url = _ref2.url,
-	          params = _ref2.params,
-	          headers = _ref2.headers,
-	          queryStringFunction = _ref2.queryStringFunction;
+	      var _ref2$resource = _ref2.resource,
+	          url = _ref2$resource.url,
+	          params = _ref2$resource.params,
+	          headers = _ref2$resource.headers,
+	          _ref2$fetchConfig = _ref2.fetchConfig,
+	          queryStringFunction = _ref2$fetchConfig.queryStringFunction,
+	          toData = _ref2$fetchConfig.toData;
 
 	      // this is the only fetch that matters
 	      var myFetchKey = this._fetchKey++;
-	      var isCancelled = function isCancelled() {
-	        return myFetchKey !== _this2._fetchKey;
+
+	      // only updates state as long as the promise is not cancelled
+	      var updateState = function updateState(state) {
+	        if (myFetchKey === _this2._fetchKey) {
+	          _this2.setState(state);
+	        }
 	      };
 
 	      this.setState({
@@ -132,42 +139,32 @@ return /******/ (function(modules) { // webpackBootstrap
 	        error: null,
 
 	        promise: fetch(url + "?" + queryStringFunction(params), { headers: headers }).then(function (response) {
-	          if (isCancelled()) {
-	            return;
-	          }
-
-	          _this2.setState({ response: response, promise: null });
-	        }, function (error) {
-	          if (isCancelled()) {
-	            return;
-	          }
-
-	          _this2.setState({ error: error, promise: null });
+	          return toData(response);
+	        }).then(function (data) {
+	          return updateState({ data: data, promise: null });
+	        }).catch(function (error) {
+	          return updateState({ error: error, promise: null });
 	        })
 	      });
 	    }
 	  }, {
 	    key: "componentDidMount",
 	    value: function componentDidMount() {
-	      this.fetchFromProps();
+	      this.fetchData(this.props);
 	    }
 	  }, {
 	    key: "componentWillReceiveProps",
 	    value: function componentWillReceiveProps(_ref3) {
-	      var url = _ref3.url,
-	          params = _ref3.params,
-	          headers = _ref3.headers,
-	          queryStringFunction = _ref3.queryStringFunction;
+	      var resource = _ref3.resource,
+	          fetchConfig = _ref3.fetchConfig;
 	      var _props = this.props,
-	          oldUrl = _props.url,
-	          oldParams = _props.params,
-	          oldHeaders = _props.headers,
-	          oldQueryStringFunction = _props.queryStringFunction;
+	          oldResource = _props.resource,
+	          oldFetchConfig = _props.fetchConfig;
 
 	      // if the url, parameters, or headers changed, we need to start over
 
-	      if (url !== oldUrl || oldQueryStringFunction !== queryStringFunction || !(0, _deepEqual2.default)(params, oldParams) || !(0, _deepEqual2.default)(headers, oldHeaders)) {
-	        this.fetchData({ url: url, params: params, headers: headers, queryStringFunction: queryStringFunction });
+	      if (!(0, _deepEqual2.default)(resource, oldResource) || !(0, _deepEqual2.default)(fetchConfig, oldFetchConfig)) {
+	        this.fetchData(this.props);
 	      }
 	    }
 	  }, {
@@ -218,26 +215,40 @@ return /******/ (function(modules) { // webpackBootstrap
 	  // the name of the prop passed down to the child
 	  propName: _react.PropTypes.string,
 
-	  // The base URL without any query parameters
-	  url: _react.PropTypes.string.isRequired,
+	  resource: _react.PropTypes.shape({
+	    // The base URL without any query parameters
+	    url: _react.PropTypes.string.isRequired,
 
-	  ///////////////////// OPTIONAL //////////////////////////////
+	    // The headers to include
+	    headers: _react.PropTypes.object,
 
-	  // The headers to include in all requests
-	  headers: _react.PropTypes.object,
+	    // The query parameters to include in GET requests
+	    params: _react.PropTypes.object
+	  }).isRequired,
 
-	  // The query parameters to include in GET requests
-	  params: _react.PropTypes.object,
+	  fetchConfig: _react.PropTypes.shape({
+	    // converts an object to a query string for the url
+	    queryStringFunction: _react.PropTypes.func.isRequired,
 
-	  // converts an object to a query string for the url
-	  queryStringFunction: _react.PropTypes.func
+	    // takes a fetch response and returns a promise that resolves to the data in the response
+	    // also deals with handling invalid responses
+	    toData: _react.PropTypes.func.isRequired
+	  })
 	};
 
 	var defaults = exports.defaults = {
 	  propName: 'sync',
-	  headers: null,
-	  params: null,
-	  queryStringFunction: _queryString2.default
+
+	  fetchConfig: {
+	    queryStringFunction: _queryString2.default,
+	    toData: function toData(response) {
+	      if (response.status === 200) {
+	        return response.json();
+	      }
+
+	      return Promise.reject(new Error("Received response status " + response.status + "!"));
+	    }
+	  }
 	};
 
 /***/ },
@@ -253,11 +264,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
 	exports.default = queryString;
+	/**
+	 * Takes a key/value pair and returns the corresponding encoded query string to represent it
+	 * @param key
+	 * @param value
+	 * @returns {*}
+	 */
 	function encodePair(key, value) {
 	  if (typeof key !== 'string') {
 	    return '';
 	  }
 
+	  // for arrays we repeat the key without braces
 	  if (Array.isArray(value)) {
 	    return value.map(function (val) {
 	      return encodePair(key, val);
