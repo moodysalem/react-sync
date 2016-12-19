@@ -7,6 +7,7 @@
     "test": "mocha --compilers js:babel-register tests/**",
     "prepublish": "npm test && npm run build",
     "build": "webpack",
+    "build:watch": "webpack --watch",
     "prepatch": "npm run build",
     "preminor": "npm run build",
     "premajor": "npm run build",

@@ -56,11 +56,9 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	"use strict";
 
-	Object.defineProperty(exports, "__esModule", {
-	  value: true
-	});
-
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+	var _class, _temp2;
 
 	var _react = __webpack_require__(1);
 
@@ -82,7 +80,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-	var ReactSync = function (_PureComponent) {
+	module.exports = (_temp2 = _class = function (_PureComponent) {
 	  _inherits(ReactSync, _PureComponent);
 
 	  function ReactSync() {
@@ -125,7 +123,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	          toData = _ref2$fetchConfig.toData;
 
 	      // this is the only fetch that matters
-	      var myFetchKey = this._fetchKey++;
+	      var myFetchKey = ++this._fetchKey;
 
 	      // only updates state as long as the promise is not cancelled
 	      var updateState = function updateState(state) {
@@ -180,11 +178,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }]);
 
 	  return ReactSync;
-	}(_react.PureComponent);
-
-	ReactSync.propTypes = _props3.types;
-	ReactSync.defaultProps = _props3.defaults;
-	exports.default = ReactSync;
+	}(_react.PureComponent), _class.propTypes = _props3.types, _class.defaultProps = _props3.defaults, _temp2);
 
 /***/ },
 /* 1 */

@@ -2,7 +2,7 @@ import React, { Children, cloneElement, PureComponent, PropTypes } from "react";
 import { types, defaults } from "./props";
 import deepEqual from "deep-equal";
 
-export default class ReactSync extends PureComponent {
+module.exports = class ReactSync extends PureComponent {
   static propTypes = types;
   static defaultProps = defaults;
 
@@ -22,7 +22,7 @@ export default class ReactSync extends PureComponent {
 
   fetchData({ resource: { url, params, headers }, fetchConfig: { queryStringFunction, toData } }) {
     // this is the only fetch that matters
-    const myFetchKey = this._fetchKey++;
+    const myFetchKey = ++this._fetchKey;
 
     // only updates state as long as the promise is not cancelled
     const updateState = state => {
@@ -69,4 +69,4 @@ export default class ReactSync extends PureComponent {
       { [ propName ]: this.state }
     );
   }
-}
+};

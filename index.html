@@ -1,14 +1,63 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
+<head>
     <meta charset="UTF-8">
     <title>ReactSync</title>
-  </head>
-  <body>
-    <h1>
-      React Sync
-    </h1>
 
-    <p>This component is undergoing a re-write. Check back again later.</p>
-  </body>
+</head>
+<body>
+<h1>React Sync</h1>
+
+<div id="app">
+    <p>Loading React...</p>
+</div>
+
+
+<!-- babel -->
+<script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+<!-- react 15.4.1 -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/15.4.1/react.js"
+        integrity="sha256-Ts/ugRJsJSTNoEo7mI4RNnNloSCw+ctm4ft8V0x/SUg=" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/15.4.1/react-dom.js"
+        integrity="sha256-wOXsmc3/F0mnd8nrFf9RjyeImU8O9uhah1vLdYhUPe4=" crossorigin="anonymous"></script>
+
+<script src="./dist/react-sync.js"></script>
+<script type="text/babel">
+
+    const ProvidesPosts = ({ resource, ...rest }) =>(
+            <ReactSync {...rest}
+                       resource={{ ...resource, url: 'https://jsonplaceholder.typicode.com/posts' }}
+                       propName="posts"/>
+    );
+
+    const UsesPosts = ({ posts: { promise, data, error } }) => (
+            <div>
+                {
+                    promise != null ? 'Loading posts...' :
+                            (
+                                    error != null ? error.message :
+                                            data != null ? data.map(
+                                                    ({ id, body, title, userId }) => (
+                                                            <div key={id}>
+                                                                <h3>
+                                                                    <strong>{title}</strong>
+                                                                    <small>{userId}</small>
+                                                                </h3>
+                                                                <p>{body}</p>
+                                                            </div>
+                                                    )
+                                            ) : null
+                            )
+                }
+            </div>
+    );
+
+    ReactDOM.render(
+            <ProvidesPosts>
+                <UsesPosts/>
+            </ProvidesPosts>,
+            document.getElementById('app')
+    );
+</script>
+</body>
 </html>
