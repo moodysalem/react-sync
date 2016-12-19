@@ -6,6 +6,7 @@
   ],
   "plugins": [
     "transform-strict-mode",
-    "transform-class-properties"
+    "transform-class-properties",
+    "add-module-exports"
   ]
 }

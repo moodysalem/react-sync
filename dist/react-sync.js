@@ -56,9 +56,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	"use strict";
 
-	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
 
-	var _class, _temp2;
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 	var _react = __webpack_require__(1);
 
@@ -80,7 +82,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-	module.exports = (_temp2 = _class = function (_PureComponent) {
+	var ReactSync = function (_PureComponent) {
 	  _inherits(ReactSync, _PureComponent);
 
 	  function ReactSync() {
@@ -136,9 +138,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        // always clear old errors, never clear old responses
 	        error: null,
 
-	        promise: fetch(url + "?" + queryStringFunction(params), { headers: headers }).then(function (response) {
-	          return toData(response);
-	        }).then(function (data) {
+	        promise: fetch(url + "?" + queryStringFunction(params), { headers: headers }).then(toData).then(function (data) {
 	          return updateState({ data: data, promise: null });
 	        }).catch(function (error) {
 	          return updateState({ error: error, promise: null });
@@ -152,17 +152,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	  }, {
 	    key: "componentWillReceiveProps",
-	    value: function componentWillReceiveProps(_ref3) {
-	      var resource = _ref3.resource,
-	          fetchConfig = _ref3.fetchConfig;
-	      var _props = this.props,
+	    value: function componentWillReceiveProps(nextProps) {
+	      var resource = nextProps.resource,
+	          fetchConfig = nextProps.fetchConfig,
+	          _props = this.props,
 	          oldResource = _props.resource,
 	          oldFetchConfig = _props.fetchConfig;
 
 	      // if the url, parameters, or headers changed, we need to start over
 
 	      if (!(0, _deepEqual2.default)(resource, oldResource) || !(0, _deepEqual2.default)(fetchConfig, oldFetchConfig)) {
-	        this.fetchData(this.props);
+	        this.fetchData(nextProps);
 	      }
 	    }
 	  }, {
@@ -178,7 +178,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }]);
 
 	  return ReactSync;
-	}(_react.PureComponent), _class.propTypes = _props3.types, _class.defaultProps = _props3.defaults, _temp2);
+	}(_react.PureComponent);
+
+	ReactSync.propTypes = _props3.types;
+	ReactSync.defaultProps = _props3.defaults;
+	exports.default = ReactSync;
+	;
+	module.exports = exports["default"];
 
 /***/ },
 /* 1 */
@@ -293,6 +299,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return encodePair(k, params[k]);
 	  }).join('&');
 	}
+	module.exports = exports['default'];
 
 /***/ },
 /* 4 */

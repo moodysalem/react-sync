@@ -2,7 +2,7 @@ import React, { Children, cloneElement, PureComponent, PropTypes } from "react";
 import { types, defaults } from "./props";
 import deepEqual from "deep-equal";
 
-module.exports = class ReactSync extends PureComponent {
+export default class ReactSync extends PureComponent {
   static propTypes = types;
   static defaultProps = defaults;
 
@@ -36,15 +36,9 @@ module.exports = class ReactSync extends PureComponent {
       error: null,
 
       promise: fetch(`${url}?${queryStringFunction(params)}`, { headers })
-        .then(
-          response => toData(response)
-        )
-        .then(
-          data => updateState({ data, promise: null })
-        )
-        .catch(
-          error => updateState({ error, promise: null })
-        )
+        .then(toData)
+        .then(data => updateState({ data, promise: null }))
+        .catch(error => updateState({ error, promise: null }))
     });
   }
 
@@ -52,12 +46,13 @@ module.exports = class ReactSync extends PureComponent {
     this.fetchData(this.props);
   }
 
-  componentWillReceiveProps({ resource, fetchConfig }) {
-    const { resource: oldResource, fetchConfig: oldFetchConfig } = this.props;
+  componentWillReceiveProps(nextProps) {
+    const { resource, fetchConfig } = nextProps,
+      { resource: oldResource, fetchConfig: oldFetchConfig } = this.props;
 
     // if the url, parameters, or headers changed, we need to start over
     if (!deepEqual(resource, oldResource) || !deepEqual(fetchConfig, oldFetchConfig)) {
-      this.fetchData(this.props);
+      this.fetchData(nextProps);
     }
   }
 

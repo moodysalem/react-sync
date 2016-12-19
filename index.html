@@ -23,6 +23,7 @@
 
 <script src="./dist/react-sync.js"></script>
 <script type="text/babel">
+    'use strict';
 
     const ProvidesPosts = ({ resource, ...rest }) =>(
             <ReactSync {...rest}
@@ -33,29 +34,47 @@
     const UsesPosts = ({ posts: { promise, data, error } }) => (
             <div>
                 {
-                    promise != null ? 'Loading posts...' :
+                    data == null && promise != null ? 'Loading posts...' :
                             (
                                     error != null ? error.message :
-                                            data != null ? data.map(
+                                            data != null && data.length > 0 ? data.map(
                                                     ({ id, body, title, userId }) => (
                                                             <div key={id}>
                                                                 <h3>
+                                                                    <em> by user ID {userId}: </em>
                                                                     <strong>{title}</strong>
-                                                                    <small>{userId}</small>
                                                                 </h3>
                                                                 <p>{body}</p>
                                                             </div>
                                                     )
-                                            ) : null
+                                            ) : 'No matching posts!'
                             )
                 }
             </div>
     );
 
+    class App extends React.PureComponent {
+        state = {
+            userId: ''
+        };
+
+        render() {
+            const { userId } = this.state;
+            return (
+                    <div>
+                        <input type="number" value={userId}
+                               placeholder="userId filter"
+                               onChange={e => this.setState({ userId: e.target.value })}/>
+                        <ProvidesPosts resource={{ params: userId.length > 0 ? { userId } : null }}>
+                            <UsesPosts/>
+                        </ProvidesPosts>
+                    </div>
+            );
+        }
+    }
+
     ReactDOM.render(
-            <ProvidesPosts>
-                <UsesPosts/>
-            </ProvidesPosts>,
+            <App/>,
             document.getElementById('app')
     );
 </script>
