@@ -51,7 +51,7 @@ Composition is king. For example, want to automatically refetch every minute? Cr
       };
             
       refresh = () => {
-        this.setState({ _ts: (new Date()).getTime() });
+        this.setState({ _ts: now() });
         this.triggerNextRefresh(this.props.refreshEveryMs);
       };
       
