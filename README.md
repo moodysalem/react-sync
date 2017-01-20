@@ -72,3 +72,7 @@ Composition is king. For example, want to automatically refetch every minute? Cr
         return <Sync {...rest} resource={{...resource, params: {...resource.params, _ts} }}/>;
       }
     }
+    
+What about attaching a token from the context to all requests?
+
+    // coming soom
