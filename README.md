@@ -6,11 +6,13 @@ A declarative approach to fetching data using [HTML5 Fetch](https://developer.mo
 ## Status
 This project has been rewritten between versions 0.5 to 0.6 to be only responsible for fetching data. A demo is available in the [index.html](https://github.com/moodysalem/react-sync/blob/gh-pages/index.html) file.
 
+I believe in its current state it's stable and ready to be used (v0.6.4)
+
 ## Purpose
 `react-sync` provides a single higher order component used for retrieving data from your APIs. Manipulating and rendering the data is your responsibility, but refreshing the data from the API is as simple as changing a prop.
 
 ## Size
-The source is relatively short and very easy to understand (< 100 LOC) and the UMD module is < 15kb uncompressed and unminified.
+The source is relatively short and very easy to understand (< 100 LOC) and the UMD module is < 15kb before compression or minification!
 
 ## API
 See [props.jsx](https://github.com/moodysalem/react-sync/blob/gh-pages/src/props.jsx) for an annotated description of the props accepted by this component
@@ -32,47 +34,87 @@ If you have included the script as a tag on the page and are not using webpack, 
 See the [demo source](https://github.com/moodysalem/react-sync/blob/gh-pages/index.html#L43) for example.
 
 ## Patterns
-Composition is king. For example, want to automatically refetch every minute? Create a component that wraps ReactSync and updates a timestamp query parameter every minute.
+Composition is king when using this component. 
 
-    import Sync from 'react-sync';
-    import React, { PureComponent } from 'react';
+For example, want to automatically refetch every minute? 
+Create a component that wraps ReactSync and updates a timestamp query parameter every minute.
+
+    import React, { PureComponent } from "react";
+    import Sync from "react-sync";
     
     const now = () => (new Date()).getTime();
     
-    class RefreshingSync extends PureComponent {
-      static propTypes = { refreshEveryMs: PropTypes.number };
-      
+    export default class RefreshSync extends PureComponent {
+      static propTypes = {
+        refreshEvery: PropTypes.number
+      };
+    
       _timer = null;
-      state = { _ts: now() };
-      
+      state = {
+        _ts: now()
+      };
+    
       triggerNextRefresh = after => {
         clearTimeout(this._timer);
         this._timer = setTimeout(this.refresh, after);
       };
-            
+    
       refresh = () => {
         this.setState({ _ts: now() });
-        this.triggerNextRefresh(this.props.refreshEveryMs);
+        this.triggerNextRefresh(this.props.refreshEvery);
       };
-      
+    
       componentDidMount() {
-        this.triggerNextRefresh(this.props.refreshEveryMs);
+        this.triggerNextRefresh(this.props.refreshEvery);
       }
-      
-      componentWillReceiveProps({ refreshEveryMs }) {
-        if (refreshEveryMs !== this.props.refreshEveryMs) {
-          this.triggerNextRefresh(refreshEveryMs);
+    
+      componentWillReceiveProps({ refreshEvery }) {
+        if (refreshEvery !== this.props.refreshEvery) {
+          this.triggerNextRefresh(refreshEvery);
         }
       }
-      
+    
       render() {
-        const { refreshEveryMs, resource, ...rest } = this.props,
+        const { refreshEvery, resource, ...rest } = this.props,
           { _ts } = this.state;
-          
-        return <Sync {...rest} resource={{...resource, params: {...resource.params, _ts} }}/>;
+    
+        return <Sync {...rest} resource={{ ...resource, params: { ...resource.params, _ts } }}/>;
       }
     }
     
 What about attaching a token from the context to all requests?
 
-    // coming soom
+    import React, { PureComponent } from "react";
+    import Sync from "react-sync";
+    
+    export default class AuthenticateSync extends PureComponent {
+      static contextTypes = {
+        token: PropTypes.string
+      };
+    
+      render() {
+        const { resource: { headers, ...resource }, ...rest } = this.props,
+          { token } = this.context;
+    
+        return (
+          <Sync {...rest}
+                resource={{
+                  ...resource,
+                  headers: {
+                    ...headers,
+                    Authorization: token ? `Bearer ${token}` : null
+                  }
+                }}/>
+        );
+      }
+    }
+    
+How about just defaulting a base URL?
+
+    import React, { PureComponent } from "react";
+    import Sync from "react-sync";
+    import join from "url-join";
+    
+    export const MyApiSync = ({ path, resource, ...rest }) => (
+      <Sync {...rest} resource={{ ...resource, url: join('https://my-api.com', path) }}/>
+    );
