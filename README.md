@@ -1,15 +1,12 @@
 # [![Build Status](https://travis-ci.org/moodysalem/react-sync.svg)](https://travis-ci.org/moodysalem/react-sync) [![npm version](https://img.shields.io/npm/v/react-sync.svg)](https://www.npmjs.com/package/react-sync) react-sync
 
-
-A declarative approach to fetching data using [HTML5 Fetch](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API)
-
-## Status
-This project has been rewritten between versions 0.5 to 0.6 to be only responsible for fetching data. A demo is available [here](https://moodysalem.com/react-sync/).
-
-I believe in its current state it's stable and ready to be used (v0.6.4)
+A declarative approach to fetching API data using [HTML5 Fetch](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API)
 
 ## Purpose
-`react-sync` provides a single higher order component used for retrieving data from your APIs. Manipulating and rendering the data is your responsibility, but refreshing the data from the API is as simple as changing a prop.
+`react-sync` provides a single higher order component used for retrieving data from your APIs. Manipulating and rendering the data is your responsibility, but refreshing the data from the API is as simple as changing a single prop.
+
+## Status
+The v0.6.4 API is stable. This component only concerns itself with the R in CRUD.
 
 ## Size
 The source is relatively short and very easy to understand (< 100 LOC) and the UMD module is < 15kb before compression or minification!
