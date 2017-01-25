@@ -27,11 +27,13 @@ The source is relatively short and very easy to understand (< 100 LOC) and the U
 Source: [props.jsx](https://github.com/moodysalem/react-sync/blob/gh-pages/src/props.jsx)
 
 ## Child Props
-|   Name  |                     Description                     |        Type        |
-|:-------:|:---------------------------------------------------:|:------------------:|
-| promise | The pending promise if any requests are outstanding | instanceof Promise |
-|   data  |       Data that has been fetched from the API       |                    |
-|  error  |       Any fetch errors that may have occurred       |  instanceof Error  |
+|        Name        |                     Description                     |        Type        |
+|:------------------:|:---------------------------------------------------:|:------------------:|
+| [propName].promise | The pending promise if any requests are outstanding | instanceof Promise |
+|   [propName].data  |       Data that has been fetched from the API       |                    |
+|  [propName].error  |       Any fetch errors that may have occurred       |  instanceof Error  |
+
+[propName] corresponds to the propName given to the Sync component and defaults to 'sync'
 
 ## Install
 `npm install --save react-sync`
