@@ -30,7 +30,9 @@ Source: [props.jsx](https://github.com/moodysalem/react-sync/blob/gh-pages/src/p
 |   [propName].data  |       Data that has been fetched from the API       |                    |
 |  [propName].error  |       Any fetch errors that may have occurred       |  instanceof Error  |
 
-[propName] corresponds to the propName given to the Sync component and defaults to 'sync'
+> [propName]
+
+Corresponds to the `propName` given to the `ReactSync` component and defaults to `'sync'`
 
 ## Install
 `npm install --save react-sync`
