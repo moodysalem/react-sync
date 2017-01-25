@@ -9,7 +9,7 @@ A declarative approach to fetching API data using [HTML5 Fetch](https://develope
 The v0.6.4 API is stable. This component only concerns itself with the R in CRUD.
 
 ## Size
-The source is relatively short and very easy to understand (< 100 LOC) and the UMD module is < 15kb before compression or minification!
+v0.6.4 - 2104 bytes minified and gzipped
 
 ## ReactSync Props
 |               Name              |                                                 Description                                                 |   Type   | Required |              Default             |
