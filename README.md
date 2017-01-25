@@ -14,8 +14,24 @@ I believe in its current state it's stable and ready to be used (v0.6.4)
 ## Size
 The source is relatively short and very easy to understand (< 100 LOC) and the UMD module is < 15kb before compression or minification!
 
-## API
-See [props.jsx](https://github.com/moodysalem/react-sync/blob/gh-pages/src/props.jsx) for an annotated description of the props accepted by this component
+## ReactSync Props
+|               Name              |                                                 Description                                                 |   Type   | Required |              Default             |
+|:-------------------------------:|:-----------------------------------------------------------------------------------------------------------:|:--------:|:--------:|:--------------------------------:|
+|             propName            |               The name of the prop passed to child component containing the state of the sync               |  string  |    No    |             `'sync'`             |
+|           resource.url          |                                The url to fetch without any query parameters                                |  string  |    Yes   |                                  |
+|         resource.headers        |                           Object containing all the headers to pass to the request                          |  object  |    No    |               null               |
+|         resource.params         |                      Object containing all the query parameters to pass to the request                      |  object  |    No    |               null               |
+| fetchConfig.queryStringFunction |                     Function used to convert the query parameters prop to a query string                    | function |    No    |          query-string.js         |
+|        fetchConfig.toData       | Function that takes a fetch response object and returns a promise that resolves to the data in the response | function |    No    | returns response JSON by default |
+
+Source: [props.jsx](https://github.com/moodysalem/react-sync/blob/gh-pages/src/props.jsx)
+
+## Child Props
+|   Name  |                     Description                     |        Type        |
+|:-------:|:---------------------------------------------------:|:------------------:|
+| promise | The pending promise if any requests are outstanding | instanceof Promise |
+|   data  |       Data that has been fetched from the API       |                    |
+|  error  |       Any fetch errors that may have occurred       |  instanceof Error  |
 
 ## Install
 `npm install --save react-sync`
