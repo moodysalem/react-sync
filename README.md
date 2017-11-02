@@ -8,10 +8,7 @@ Manipulating and rendering the data is your responsibility, but refreshing the d
 changing the parameters of your request. Let the component manage the state of fetching the data.
 
 ## Status
-The v0.7.0 API is stable. This component only concerns itself with the R in CRUD
-
-## Size
-v0.6.4 - 2104 bytes minified and gzipped
+The v0.8.0 API is stable. This component only concerns itself with the R in CRUD
 
 ## ReactSync Props
 |               Name              |                                                 Description                                                 |   Type   | Required |              Default             |
