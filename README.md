@@ -47,12 +47,13 @@ For example, want to automatically refetch every minute?
 Create a component that wraps ReactSync and updates a timestamp query parameter every minute.
 
 ```jsx
-import React, { PureComponent } from "react";
-import Sync from "react-sync";
+import React, { Component } from 'react';
+import PropTypes from 'prop-types';
+import Sync from 'react-sync';
 
 const now = () => (new Date()).getTime();
 
-export default class RefreshSync extends PureComponent {
+export default class RefreshSync extends Component {
   static propTypes = {
     refreshEvery: PropTypes.number
   };
@@ -94,10 +95,11 @@ export default class RefreshSync extends PureComponent {
 What about attaching a token from the context to all requests?
 
 ```jsx
-import React, { PureComponent } from "react";
-import Sync from "react-sync";
+import React, { Component } from 'react';
+import PropTypes from 'prop-types';
+import Sync from 'react-sync';
 
-export default class AuthenticatedSync extends PureComponent {
+export default class AuthenticatedSync extends Component {
   static contextTypes = {
     token: PropTypes.string
   };
@@ -123,9 +125,9 @@ export default class AuthenticatedSync extends PureComponent {
 How about just defaulting a base URL?
 
 ```jsx
-import React, { PureComponent } from "react";
-import Sync from "react-sync";
-import join from "url-join";
+import React from 'react';
+import Sync from 'react-sync';
+import join from 'url-join';
 
 export const MyApiSync = ({ path, resource, ...rest }) => (
   <Sync {...rest} resource={{ ...resource, url: join('https://my-api.com', path) }}/>
