@@ -1,13 +1,13 @@
-var webpack = require('webpack');
+const path = require('path');
 
 module.exports = {
-  entry: "./src/index.jsx",
+  entry: './src/index.jsx',
 
   output: {
-    path: "./dist",
+    path: path.resolve('./dist'),
     filename: 'react-sync.js',
-    library: "ReactSync",
-    libraryTarget: "umd"
+    library: 'ReactSync',
+    libraryTarget: 'umd'
   },
 
   externals: {
@@ -20,12 +20,12 @@ module.exports = {
       {
         test: /\.jsx?$/,
         exclude: /node_modules/,
-        loader: 'babel'
+        loader: 'babel-loader'
       }
     ]
   },
 
   resolve: {
-    extensions: [ '', '.js', '.jsx' ]
+    extensions: [ '.js', '.jsx' ]
   }
 };

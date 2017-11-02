@@ -1,5 +1,5 @@
-import qs from "../src/query-string";
-import assert from "assert";
+import qs from '../src/toQueryString';
+import assert from 'assert';
 
 describe('qs', () => {
   it('returns empty strings when appropriate', () => {

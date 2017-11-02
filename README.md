@@ -3,10 +3,12 @@
 A declarative approach to fetching API data using [HTML5 Fetch](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API)
 
 ## Purpose
-`react-sync` provides a single higher order component used for retrieving data from your APIs. Manipulating and rendering the data is your responsibility, but refreshing the data from the API is as simple as changing a single prop.
+`react-sync` provides a single higher order component used for retrieving data from your APIs. 
+Manipulating and rendering the data is your responsibility, but refreshing the data from the API is as simple as 
+changing the parameters of your request. Let the component manage the state of fetching the data.
 
 ## Status
-The v0.6.4 API is stable. This component only concerns itself with the R in CRUD.
+The v0.7.0 API is stable. This component only concerns itself with the R in CRUD
 
 ## Size
 v0.6.4 - 2104 bytes minified and gzipped
@@ -14,41 +16,32 @@ v0.6.4 - 2104 bytes minified and gzipped
 ## ReactSync Props
 |               Name              |                                                 Description                                                 |   Type   | Required |              Default             |
 |:-------------------------------:|:-----------------------------------------------------------------------------------------------------------:|:--------:|:--------:|:--------------------------------:|
-|             propName            |               The name of the prop passed to child component containing the state of the sync               |  string  |    No    |             `'sync'`             |
 |           resource.url          |                                The url to fetch without any query parameters                                |  string  |    Yes   |                                  |
 |         resource.headers        |                           Object containing all the headers to pass to the request                          |  object  |    No    |               `null`               |
 |         resource.params         |                      Object containing all the query parameters to pass to the request                      |  object  |    No    |               `null`               |
-| fetchConfig.queryStringFunction |                     Function used to convert the query parameters prop to a query string                    | function |    No    |          [./query-string.js](https://github.com/moodysalem/react-sync/blob/gh-pages/src/query-string.js)         |
+|     fetchConfig.toQueryString   |                     Function used to convert the query parameters prop to a query string                    | function |    No    |          [./toQueryString.js](https://github.com/moodysalem/react-sync/blob/gh-pages/src/toQueryString.js)|
 |        fetchConfig.toData       | Function that takes a fetch response object and returns a promise that resolves to the data in the response | function |    No    | returns response JSON by default |
+|             children            |           Function that takes an object `{promise, data, error}` and returns a node to be rendered          | function |    Yes   |                                  |            
 
 Source: [props.jsx](https://github.com/moodysalem/react-sync/blob/gh-pages/src/props.jsx)
 
 ## Child Props
-|        Name        |                     Description                     |        Type        |
-|:------------------:|:---------------------------------------------------:|:------------------:|
-| [propName].promise | The pending promise if any requests are outstanding | instanceof Promise |
-|   [propName].data  |       Data that has been fetched from the API       |                    |
-|  [propName].error  |       Any fetch errors that may have occurred       |  instanceof Error  |
+|   Name  |                     Description                     |        Type        |
+|:-------:|:---------------------------------------------------:|:------------------:|
+| promise | The pending promise if any requests are outstanding | instanceof Promise |
+|   data  |       Data that has been fetched from the API       |                    |
+|  error  |       Any fetch errors that may have occurred       |  instanceof Error  |
 
-> [propName]
-
-Corresponds to the `propName` given to the `ReactSync` component and defaults to `'sync'`
 
 ## Install
 `npm install --save react-sync`
 
-OR
+Alternately this project builds to a UMD module named ReactSync, so you can include a rawgit script tag in your page 
 
-`yarn add react-sync`
-
-Alternately this project builds to a UMD module named ReactSync, so you can include a rawgit script tag in your page e.g. v0.6.4: 
-
-`<script src="https://cdn.rawgit.com/moodysalem/react-sync/ef1770eb582abe6da474134e0c663233833275e4/dist/react-sync.js" type="text/javascript"></script>`
-
-If you have included the script as a tag on the page and are not using webpack, then you should look for `window.ReactSync`
+Look for `window.ReactSync`
 
 ## Usage
-See the [demo source](https://github.com/moodysalem/react-sync/blob/gh-pages/index.html#L43) for example.
+See the [demo source](https://github.com/moodysalem/react-sync/blob/gh-pages/200.html) for example usage.
 
 ## Patterns
 Composition is king when using this component. 
@@ -107,7 +100,7 @@ What about attaching a token from the context to all requests?
 import React, { PureComponent } from "react";
 import Sync from "react-sync";
 
-export default class AuthenticateSync extends PureComponent {
+export default class AuthenticatedSync extends PureComponent {
   static contextTypes = {
     token: PropTypes.string
   };

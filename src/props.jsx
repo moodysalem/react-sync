@@ -1,36 +1,34 @@
-import { PropTypes } from "react";
-import queryStringFunction from "./query-string";
+import { func, object, shape, string } from 'prop-types';
+import toQueryString from './toQueryString';
 
-export const types = {
-  // the name of the prop passed down to the child
-  propName: PropTypes.string,
+export const propTypes = {
+  // the child that is passed the state of the fetch
+  children: func.isRequired,
 
-  resource: PropTypes.shape({
+  resource: shape({
     // The base URL without any query parameters
-    url: PropTypes.string.isRequired,
+    url: string.isRequired,
 
     // The headers to include
-    headers: PropTypes.object,
+    headers: object,
 
     // The query parameters to include in GET requests
-    params: PropTypes.object
+    params: object
   }).isRequired,
 
-  fetchConfig: PropTypes.shape({
+  fetchConfig: shape({
     // converts an object to a query string for the url
-    queryStringFunction: PropTypes.func.isRequired,
+    toQueryString: func.isRequired,
 
     // takes a fetch response and returns a promise that resolves to the data in the response
     // also deals with handling invalid responses
-    toData: PropTypes.func.isRequired
+    toData: func.isRequired
   })
 };
 
-export const defaults = {
-  propName: 'sync',
-
+export const defaultProps = {
   fetchConfig: {
-    queryStringFunction,
+    toQueryString,
     toData: response => {
       if (response.status === 200) {
         return response.json();

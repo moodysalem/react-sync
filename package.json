@@ -5,15 +5,9 @@
   "main": "dist/react-sync.js",
   "scripts": {
     "test": "mocha --compilers js:babel-register tests/**",
-    "prepublish": "npm test && npm run build",
+    "prepare": "npm run build",
     "build": "webpack",
-    "build:watch": "webpack --watch",
-    "prepatch": "npm run build",
-    "preminor": "npm run build",
-    "premajor": "npm run build",
-    "patch": "npm-release patch",
-    "minor": "npm-release minor",
-    "major": "npm-release major"
+    "build:watch": "webpack --watch"
   },
   "files": [
     "dist"
@@ -40,23 +34,20 @@
     "url": "https://github.com/moodysalem/react-sync/issues"
   },
   "homepage": "https://github.com/moodysalem/react-sync#readme",
-  "dependencies": {
-    "babel-core": "^6.20.0",
-    "babel-loader": "^6.2.10",
-    "babel-plugin-add-module-exports": "^0.2.1",
-    "babel-plugin-transform-class-properties": "^6.19.0",
-    "babel-plugin-transform-require-ignore": "0.0.2",
-    "babel-plugin-transform-strict-mode": "^6.6.5",
-    "babel-preset-es2015": "^6.6.0",
-    "babel-preset-react": "^6.5.0",
-    "babel-preset-stage-1": "^6.5.0",
-    "babel-register": "^6.18.0",
-    "deep-equal": "^1.0.1",
-    "mocha": "^3.2.0",
-    "react": "^15.4.1",
-    "webpack": "^1.14.0"
-  },
   "peerDependencies": {
     "react": "*"
+  },
+  "devDependencies": {
+    "babel-core": "^6.26.0",
+    "babel-loader": "^7.1.2",
+    "babel-plugin-transform-class-properties": "^6.19.0",
+    "babel-plugin-transform-strict-mode": "^6.6.5",
+    "babel-preset-env": "^1.6.1",
+    "babel-register": "^6.26.0",
+    "deep-equal": "^1.0.1",
+    "mocha": "^4.0.1",
+    "prop-types": "^15.6.0",
+    "react": "^16.0.0",
+    "webpack": "^3.8.1"
   }
 }

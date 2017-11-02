@@ -1,10 +1,10 @@
-import React, { Children, cloneElement, PureComponent, PropTypes } from "react";
-import { types, defaults } from "./props";
-import deepEqual from "deep-equal";
+import React, { Component } from 'react';
+import { defaultProps, propTypes, types } from './props';
+import deepEqual from 'deep-equal';
 
-export default class ReactSync extends PureComponent {
-  static propTypes = types;
-  static defaultProps = defaults;
+export default class ReactSync extends Component {
+  static propTypes = propTypes;
+  static defaultProps = defaultProps;
 
   state = {
     // The pending promise
@@ -20,7 +20,7 @@ export default class ReactSync extends PureComponent {
   // the incremented # of the fetch we are working on - used to ignore previous requests
   _fetchKey = 0;
 
-  fetchData({ resource: { url, params, headers }, fetchConfig: { queryStringFunction, toData } }) {
+  fetchData({ resource: { url, params, headers }, fetchConfig: { toQueryString, toData } }) {
     // this is the only fetch that matters
     const myFetchKey = ++this._fetchKey;
 
@@ -35,7 +35,7 @@ export default class ReactSync extends PureComponent {
       // always clear old errors, never clear old responses
       error: null,
 
-      promise: fetch(`${url}?${queryStringFunction(params)}`, { headers })
+      promise: fetch(`${url}?${toQueryString(params)}`, { headers })
         .then(toData)
         .then(data => updateState({ data, promise: null }))
         .catch(error => updateState({ error, promise: null }))
@@ -57,11 +57,8 @@ export default class ReactSync extends PureComponent {
   }
 
   render() {
-    const { children, propName } = this.props;
+    const { children } = this.props;
 
-    return cloneElement(
-      Children.only(children),
-      { [ propName ]: this.state }
-    );
+    return children(this.state);
   }
 };

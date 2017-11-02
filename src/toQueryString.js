@@ -22,7 +22,7 @@ function encodePair(key, value) {
  * @param params object
  * @returns {*} query string
  */
-export default function queryString(params) {
+export default function toQueryString(params) {
   if (typeof params !== 'object' || params === null) {
     return '';
   }

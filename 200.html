@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ReactSync</title>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css"
+          integrity="sha256-916EbMg70RQy9LHiGkXzG8hSg9EdNy97GazNG/aiY1w=" crossorigin="anonymous"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
+          integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous"/>
+</head>
+<body>
+<div class="container">
+    <h1 class="page-header">React Sync</h1>
+
+    <a href="https://github.com/moodysalem/react-sync"><img style="position: absolute; top: 0; left: 0; border: 0;"
+                                                            src="https://camo.githubusercontent.com/567c3a48d796e2fc06ea80409cc9dd82bf714434/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f6c6566745f6461726b626c75655f3132313632312e706e67"
+                                                            alt="Fork me on GitHub"
+                                                            data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_left_darkblue_121621.png"></a>
+
+    <p class="lead">
+        Change the parameters as fast as you like and you should always see the correct results because
+        <code>react-sync</code> handles cancelling old requests
+    </p>
+
+    <div id="app">
+        <p>Loading assets...</p>
+    </div>
+</div>
+
+<!-- babel -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/6.26.0/babel.min.js"
+        integrity="sha256-FiZMk1zgTeujzf/+vomWZGZ9r00+xnGvOgXoj0Jo1jA=" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/16.0.0/umd/react.development.js"
+        integrity="sha256-ST7P3DAEZSLHHBnC+AyRNGDRFbSHK7EiPC3hBjkVOZA=" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/16.0.0/umd/react-dom.development.js"
+        integrity="sha256-LPSUIWkbnb8ZFvlw4VMqck85wQs2s77MeUEUVZ9uNSs=" crossorigin="anonymous"></script>
+
+<script src="./dist/react-sync.js"></script>
+<script type="text/babel">
+  'use strict';
+
+  const ProvidesPosts = ({ resource, ...rest }) => (
+    <ReactSync.default {...rest} resource={{ ...resource, url: 'https://jsonplaceholder.typicode.com/posts' }}/>
+  );
+
+  class App extends React.Component {
+    state = {
+      userId: ''
+    };
+
+    render() {
+      const { userId } = this.state;
+      return (
+        <div>
+          <input type="number" value={userId}
+                 className="form-control"
+                 placeholder="userId filter"
+                 onChange={e => this.setState({ userId: e.target.value })}/>
+
+          <ProvidesPosts resource={{ params: userId.length > 0 ? { userId } : null }}>
+            {
+              ({ promise, data, error }) => (
+                <div style={{ marginTop: 10 }}>
+                  {promise != null && data != null ? (
+                    <div className="text-center" style={{ margin: 10 }}>
+                      <i className="fa fa-spinner fa-spin fa-5x"/>
+                    </div>
+                  ) : null}
+                  {
+                    data == null && promise != null ? 'Loading posts...' :
+                      (
+                        error != null ? error.message :
+                          data != null && data.length > 0 ? data.map(
+                            ({ id, body, title, userId }) => (
+                              <div key={id} className="well well-sm">
+                                <h3>
+                                  <em> by user ID {userId}: </em>
+                                  <strong>{title}</strong>
+                                </h3>
+                                <p>{body}</p>
+                              </div>
+                            )
+                          ) : 'No matching posts!'
+                      )
+                  }
+                </div>
+              )
+            }
+          </ProvidesPosts>
+        </div>
+      );
+    }
+  }
+
+  ReactDOM.render(
+    <App/>,
+    document.getElementById('app')
+  );
+</script>
+</body>
+</html>
