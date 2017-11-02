@@ -38,7 +38,7 @@ Alternately this project builds to a UMD module named ReactSync, so you can incl
 Look for `window.ReactSync`
 
 ## Usage
-See the [demo source](https://github.com/moodysalem/react-sync/blob/gh-pages/200.html) for example usage.
+See the [demo source](https://github.com/moodysalem/react-sync/blob/gh-pages/index.html) for example usage.
 
 ## Patterns
 Composition is king when using this component. 
