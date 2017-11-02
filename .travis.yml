@@ -4,4 +4,4 @@ cache:
   - "node_modules"
 branches:
   only:
-  - "gh-pages"
+  - "master"
