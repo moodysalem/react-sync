@@ -7,9 +7,10 @@
     "test": "mocha --compilers js:babel-register tests/**",
     "prepare": "npm run build",
     "build": "webpack",
-    "build:watch": "webpack --watch"
+    "build:watch": "watch \"npm run build\" src/"
   },
   "files": [
+    "src",
     "dist"
   ],
   "repository": {
@@ -48,6 +49,7 @@
     "mocha": "^4.0.1",
     "prop-types": "^15.6.0",
     "react": "^16.0.0",
+    "watch": "^1.0.2",
     "webpack": "^3.8.1"
   }
 }
