@@ -3,30 +3,31 @@
 A declarative approach to fetching API data using [HTML5 Fetch](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API)
 
 ## Purpose
-`react-sync` provides a single higher order component used for retrieving data from your APIs. 
-Manipulating and rendering the data is your responsibility, but refreshing the data from the API is as simple as 
+`react-sync` provides a single higher order component used for fetching data from your APIs
+ 
+Rendering the data is your responsibility, but refreshing the data from the API is as simple as 
 changing the parameters of your request. Let the component manage the state of fetching the data.
 
-## Status
-The v0.8.0 API is stable. This component only concerns itself with the R in CRUD
-
 ## ReactSync Props
-|               Name              |                                                 Description                                                 |   Type   | Required |              Default             |
-|:-------------------------------:|:-----------------------------------------------------------------------------------------------------------:|:--------:|:--------:|:--------------------------------:|
-|           resource.url          |                                The url to fetch without any query parameters                                |  string  |    Yes   |                                  |
-|         resource.headers        |                           Object containing all the headers to pass to the request                          |  object  |    No    |               `null`               |
-|         resource.params         |                      Object containing all the query parameters to pass to the request                      |  object  |    No    |               `null`               |
-|     fetchConfig.toQueryString   |                     Function used to convert the query parameters prop to a query string                    | function |    No    |          [./toQueryString.js](https://github.com/moodysalem/react-sync/blob/gh-pages/src/toQueryString.js)|
-|        fetchConfig.toData       | Function that takes a fetch response object and returns a promise that resolves to the data in the response | function |    No    | returns response JSON by default |
-|             children            |           Function that takes an object `{promise, data, error}` and returns a node to be rendered          | function |    Yes   |                                  |            
+|          Name          |                                                 Description                                                 |   Type   | Required |              Default             |
+|:----------------------:|:-----------------------------------------------------------------------------------------------------------:|:--------:|:--------:|:--------------------------------:|
+|           url          |                                The url to fetch without any query parameters                                |  string  |    Yes   |                                  |
+|         headers        |                           Object containing all the headers to pass to the request                          |  object  |    No    |               `null`               |
+|         params         |                      Object containing all the query parameters to pass to the request                      |  object  |    No    |               `null`               |
+|        toQueryString   |                     Function used to convert the query parameters prop to a query string                    | function |    No    |          [./toQueryString.js](https://github.com/moodysalem/react-sync/blob/gh-pages/src/toQueryString.js)|
+|         toData         | Function that takes a fetch response object and returns a promise that resolves to the data in the response | function |    No    | returns response JSON by default |
+|        children        |           Function that takes an object `{promise, data, error}` and returns a node to be rendered          | function |    Yes   |                                  |            
 
 Source: [props.jsx](https://github.com/moodysalem/react-sync/blob/gh-pages/src/props.jsx)
 
 ## Child Props
+
+The function passed to the `children` prop receives the fetch state 
+
 |   Name  |                     Description                     |        Type        |
 |:-------:|:---------------------------------------------------:|:------------------:|
 | promise | The pending promise if any requests are outstanding | instanceof Promise |
-|   data  |       Data that has been fetched from the API       |                    |
+|   data  |       Data that has been fetched from the API       | result of `toData` |
 |  error  |       Any fetch errors that may have occurred       |  instanceof Error  |
 
 
@@ -35,10 +36,29 @@ Source: [props.jsx](https://github.com/moodysalem/react-sync/blob/gh-pages/src/p
 
 Alternately this project builds to a UMD module named ReactSync, so you can include a unpkg script tag in your page 
 
-Look for `window.ReactSync`
+Look for `window.ReactSync` when importing the UMD module via a script tag
 
 ## Usage
-See the [demo source](https://github.com/moodysalem/react-sync/blob/gh-pages/index.html) for example usage.
+See the [demo source](https://github.com/moodysalem/react-sync/blob/gh-pages/index.html) for example usage with filtering
+
+```jsx harmony
+import React from 'react';
+import ReactSync from 'react-sync';
+
+const StarGazers = ({ owner, repo, githubToken }) => (
+  <ReactSync 
+    url={`https://api.github.com/repos/${owner}/${repo}/stargazers`} 
+    headers={{Authorization: `token ${githubToken}`}}>
+    {
+      ({ promise, data, error }) => (
+        <span>
+          {promise !== null ? 'Loading...' : data}      
+        </span>
+      )
+    }
+  </ReactSync>
+);
+```
 
 ## Patterns
 Composition is king when using this component. 
@@ -84,10 +104,10 @@ export default class RefreshSync extends Component {
   }
 
   render() {
-    const { refreshEvery, resource, ...rest } = this.props,
+    const { params, ...rest } = this.props,
       { _ts } = this.state;
 
-    return <Sync {...rest} resource={{ ...resource, params: { ...resource.params, _ts } }}/>;
+    return <Sync {...rest} params={{ ...params, _ts }}/>;
   }
 }
 ```
@@ -105,18 +125,17 @@ export default class AuthenticatedSync extends Component {
   };
 
   render() {
-    const { resource: { headers, ...resource }, ...rest } = this.props,
+    const { headers, ...rest } = this.props,
       { token } = this.context;
 
     return (
-      <Sync {...rest}
-            resource={{
-              ...resource,
-              headers: {
-                ...headers,
-                Authorization: token ? `Bearer ${token}` : null
-              }
-            }}/>
+      <Sync
+        {...rest}
+        headers={{
+          ...headers,
+          Authorization: token ? `Bearer ${token}` : null
+        }}
+      />
     );
   }
 }
@@ -127,9 +146,8 @@ How about just defaulting a base URL?
 ```jsx
 import React from 'react';
 import Sync from 'react-sync';
-import join from 'url-join';
 
-export const MyApiSync = ({ path, resource, ...rest }) => (
-  <Sync {...rest} resource={{ ...resource, url: join('https://my-api.com', path) }}/>
+export const MyApiSync = ({ path, ...rest }) => (
+  <Sync {...rest} url={[ 'https://my-api.com', path ].join('/')}/>
 );
 ```

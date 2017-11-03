@@ -2,7 +2,7 @@ import { func, object, shape, string } from 'prop-types';
 import toQueryString from './toQueryString';
 
 export const propTypes = {
-  // the child that is passed the state of the fetch
+  // The function that generates nodes from the fetch state
   children: func.isRequired,
 
   // The base URL without any query parameters

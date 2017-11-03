@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { defaultProps, propTypes, types } from './props';
+import { defaultProps, propTypes } from './props';
 import deepEqual from 'deep-equal';
 
 export default class ReactSync extends Component {
@@ -20,7 +20,7 @@ export default class ReactSync extends Component {
   // the incremented # of the fetch we are working on - used to ignore previous requests
   _fetchKey = 0;
 
-  fetchData({ resource: { url, params, headers }, fetchConfig: { toQueryString, toData } }) {
+  fetchData({ url, params, headers, toQueryString, toData }) {
     // this is the only fetch that matters
     const myFetchKey = ++this._fetchKey;
 
@@ -47,11 +47,13 @@ export default class ReactSync extends Component {
   }
 
   componentWillReceiveProps(nextProps) {
-    const { resource, fetchConfig } = nextProps,
-      { resource: oldResource, fetchConfig: oldFetchConfig } = this.props;
-
     // if the url, parameters, or headers changed, we need to start over
-    if (!deepEqual(resource, oldResource) || !deepEqual(fetchConfig, oldFetchConfig)) {
+    if (
+      !deepEqual(
+        { url: nextProps.url, params: nextProps.params, headers: nextProps.header },
+        { url: this.props.url, params: this.props.params, headers: this.props.headers }
+      )
+    ) {
       this.fetchData(nextProps);
     }
   }
