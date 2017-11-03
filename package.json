@@ -4,10 +4,10 @@
   "description": "A react component that handles data fetching and saving",
   "main": "dist/react-sync.js",
   "scripts": {
-    "test": "mocha --compilers js:babel-register tests/**",
-    "prepare": "npm run build",
+    "test": "mocha --require babel-register tests/**",
     "build": "webpack",
-    "build:watch": "watch \"npm run build\" src/"
+    "build:watch": "watch \"npm run build\" src/",
+    "prepare": "npm run build"
   },
   "files": [
     "src",
