@@ -33,7 +33,7 @@ Source: [props.jsx](https://github.com/moodysalem/react-sync/blob/gh-pages/src/p
 ## Install
 `npm install --save react-sync`
 
-Alternately this project builds to a UMD module named ReactSync, so you can include a rawgit script tag in your page 
+Alternately this project builds to a UMD module named ReactSync, so you can include a unpkg script tag in your page 
 
 Look for `window.ReactSync`
 
