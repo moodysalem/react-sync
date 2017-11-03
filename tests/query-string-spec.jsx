@@ -16,10 +16,10 @@ describe('qs', () => {
 
   it('encodes keys and values', () => {
     const val = '12&!@%(!%)(*^';
-    assert.equal(qs({ [val]: val }), `${encodeURIComponent(val)}=${encodeURIComponent(val)}`);
+    assert.equal(qs({ [ val ]: val }), `${encodeURIComponent(val)}=${encodeURIComponent(val)}`);
   });
 
   it('repeats keys for array values', () => {
-    assert.equal(qs({ arr: [ 1, 2, 3 ] }), `arr=1&arr=2&arr=3`);
+    assert.equal(qs({ arr: [ 1, 2, 3 ], blue: 123 }), `arr=1&arr=2&arr=3&blue=123`);
   });
 });

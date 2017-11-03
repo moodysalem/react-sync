@@ -5,12 +5,13 @@
   "main": "dist/react-sync.js",
   "scripts": {
     "test": "mocha --require babel-register tests/**",
-    "build": "webpack",
+    "build": "webpack -p && babel src/ --out-dir lib/",
     "build:watch": "watch \"npm run build\" src/",
     "prepare": "npm run build"
   },
   "files": [
     "src",
+    "lib",
     "dist"
   ],
   "repository": {
@@ -39,6 +40,7 @@
     "react": "*"
   },
   "devDependencies": {
+    "babel-cli": "^6.26.0",
     "babel-core": "^6.26.0",
     "babel-loader": "^7.1.2",
     "babel-plugin-transform-class-properties": "^6.19.0",
