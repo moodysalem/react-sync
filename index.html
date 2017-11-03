@@ -11,7 +11,7 @@
 </head>
 <body>
 <div class="container">
-    <h1 class="page-header">React Sync v0.8.1</h1>
+    <h1 class="page-header">React Sync v0.9.0</h1>
 
     <a href="https://github.com/moodysalem/react-sync"><img style="position: absolute; top: 0; left: 0; border: 0;"
                                                             src="https://camo.githubusercontent.com/567c3a48d796e2fc06ea80409cc9dd82bf714434/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f6c6566745f6461726b626c75655f3132313632312e706e67"
@@ -35,15 +35,15 @@
         integrity="sha256-ST7P3DAEZSLHHBnC+AyRNGDRFbSHK7EiPC3hBjkVOZA=" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/16.0.0/umd/react-dom.development.js"
         integrity="sha256-LPSUIWkbnb8ZFvlw4VMqck85wQs2s77MeUEUVZ9uNSs=" crossorigin="anonymous"></script>
-<script src="https://unpkg.com/react-sync@0.8.1/dist/react-sync.js"
-        integrity="sha384-JR4UPQTrf1p88MwqupZfZvcVTI6fGKse15n7rI7RnRpRbPU51sPdaBQCEdYDUzpD"
+<script src="https://unpkg.com/react-sync@0.9.0/dist/react-sync.js"
+        integrity="sha384-bOofg1r6tt3u6UvGHwAVQFm+hh67E2E68ncMz5lgZsC5WgOe8U3YuenbNlyMKKXR"
         crossorigin="anonymous"></script>
 
 <script type="text/babel">
   'use strict';
 
-  const ProvidesPosts = ({ resource, ...rest }) => (
-    <ReactSync.default {...rest} resource={{ ...resource, url: 'https://jsonplaceholder.typicode.com/posts' }}/>
+  const ProvidesPosts = ({ ...rest }) => (
+    <ReactSync.default {...rest} url={'https://jsonplaceholder.typicode.com/posts'}/>
   );
 
   class App extends React.Component {
@@ -60,7 +60,7 @@
                  placeholder="userId filter"
                  onChange={e => this.setState({ userId: e.target.value })}/>
 
-          <ProvidesPosts resource={{ params: userId.length > 0 ? { userId } : null }}>
+          <ProvidesPosts params={userId.length > 0 ? { userId } : null}>
             {
               ({ promise, data, error }) => (
                 <div style={{ marginTop: 10 }}>
