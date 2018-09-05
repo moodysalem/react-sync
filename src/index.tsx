@@ -1,12 +1,19 @@
-import React, { Component } from 'react';
-import { defaultProps, propTypes } from './props';
-import deepEqual from 'deep-equal';
+import { Component } from 'react';
+import { defaultProps, ReactSyncPropTypes } from './props';
 
-export default class ReactSync extends Component {
-  static propTypes = propTypes;
+// @ts-ignore
+import deepEqual = require('deep-equal');
+
+export interface StateType<T> {
+  promise: Promise<T> | null;
+  data: T | null;
+  error: Error | null
+}
+
+export default class ReactSync<T> extends Component<ReactSyncPropTypes<T>> {
   static defaultProps = defaultProps;
 
-  state = {
+  state: StateType<T> = {
     // The pending promise
     promise: null,
 
@@ -17,10 +24,10 @@ export default class ReactSync extends Component {
     error: null
   };
 
-  // the incremented # of the fetch we are working on - used to ignore previous requests
+  // the incremented # of the fetch we are working on - used to ignore responses from previous requests
   _fetchKey = 0;
 
-  fetchData({ url, params, headers, toQueryString, toData }) {
+  fetchData({ url, params, headers, toQueryString, toData }: ReactSyncPropTypes<T>) {
     // this is the only fetch that matters
     const myFetchKey = ++this._fetchKey;
 
@@ -31,14 +38,20 @@ export default class ReactSync extends Component {
       }
     };
 
-    this.setState({
+    updateState({
       // always clear old errors, never clear old responses
       error: null,
 
       promise: fetch(`${url}?${toQueryString(params)}`, { headers })
         .then(toData)
-        .then(data => updateState({ data, promise: null }))
-        .catch(error => updateState({ error, promise: null }))
+        .then(data => {
+          updateState({ data, promise: null });
+          return data;
+        })
+        .catch(error => {
+          updateState({ error, promise: null });
+          return null
+        })
     });
   }
 

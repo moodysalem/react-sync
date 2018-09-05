@@ -4,7 +4,7 @@
  * @param value
  * @returns {*}
  */
-function encodePair(key, value) {
+function encodePair(key: string, value: string | Array<string>): string {
   if (typeof key !== 'string') {
     return '';
   }
@@ -22,7 +22,7 @@ function encodePair(key, value) {
  * @param params object
  * @returns {*} query string
  */
-export default function toQueryString(params) {
+export default function toQueryString(params: any): string {
   if (typeof params !== 'object' || params === null) {
     return '';
   }

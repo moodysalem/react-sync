@@ -14,11 +14,11 @@ changing the parameters of your request. Let the component manage the state of f
 |           url          |                                The url to fetch without any query parameters                                |  string  |    Yes   |                                  |
 |         headers        |                           Object containing all the headers to pass to the request                          |  object  |    No    |               `null`               |
 |         params         |                      Object containing all the query parameters to pass to the request                      |  object  |    No    |               `null`               |
-|        toQueryString   |                     Function used to convert the query parameters prop to a query string                    | function |    No    |          [./toQueryString.js](https://github.com/moodysalem/react-sync/blob/gh-pages/src/toQueryString.js)|
+|        toQueryString   |                     Function used to convert the query parameters prop to a query string                    | function |    No    |          [./toQueryString.tsx](https://github.com/moodysalem/react-sync/blob/gh-pages/src/toQueryString.js)|
 |         toData         | Function that takes a fetch response object and returns a promise that resolves to the data in the response | function |    No    | returns response JSON by default |
 |        children        |           Function that takes an object `{promise, data, error}` and returns a node to be rendered          | function |    Yes   |                                  |            
 
-Source: [props.jsx](https://github.com/moodysalem/react-sync/blob/gh-pages/src/props.jsx)
+Source: [props.tsx](https://github.com/moodysalem/react-sync/blob/gh-pages/src/props.jsx)
 
 ## Child Props
 
